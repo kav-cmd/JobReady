@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { BookOpen, Filter, Play, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { VideoCompletionCheckbox } from "@/components/VideoCompletionButton";
+import { useTranslation } from "react-i18next";
 
 // Course data with YouTube URLs
 // Backend-ready structure: userId will be added from auth context
@@ -150,69 +151,71 @@ const emailCommunicationVideos: VideoData[] = [
   },
 ];
 
-// Course modules for Learning page
-const modules: CourseModule[] = [
-  {
-    id: "course-001",
-    title: "Microsoft Skills",
-    description: "Master Excel, Word, and PowerPoint at your own pace with beginner, intermediate, and advanced levels.",
-    duration: "Variable",
-    lessons: 9,
-    status: "not-started" as const,
-    thumbnail: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=225&fit=crop",
-  },
-  {
-    id: "course-002",
-    title: "Email Communication Skills",
-    description: "Learn professional email etiquette, writing techniques, and workplace communication.",
-    duration: "6 parts",
-    lessons: 6,
-    status: "not-started" as const,
-    thumbnail: "https://images.unsplash.com/photo-1596526131083-e8c633c948d2?w=400&h=225&fit=crop",
-  },
-  {
-    id: "course-003",
-    title: "Customer Service Excellence",
-    description: "Handle customer inquiries professionally and resolve issues effectively.",
-    duration: "2.5 hours",
-    lessons: 10,
-    status: "not-started" as const,
-    thumbnail: "https://images.unsplash.com/photo-1556745753-b2904692b3cd?w=400&h=225&fit=crop",
-    youtubeUrl: "https://www.youtube.com/watch?v=zHnq3APZQJI", // Customer Service Training
-  },
-  {
-    id: "course-004",
-    title: "Data Entry & Accuracy",
-    description: "Improve typing speed and accuracy for efficient data management.",
-    duration: "3 hours",
-    lessons: 12,
-    status: "not-started" as const,
-    thumbnail: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=225&fit=crop",
-    youtubeUrl: "https://www.youtube.com/watch?v=sM_oFKIf2cg", // Data Entry Skills Training
-  },
-  {
-    id: "course-005",
-    title: "Basic Computer Skills",
-    description: "Essential computer operations, file management, and software basics.",
-    duration: "2 hours",
-    lessons: 8,
-    status: "locked" as const,
-    thumbnail: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=225&fit=crop",
-    youtubeUrl: "https://www.youtube.com/watch?v=qmeLz7vJAG8", // Computer Basics for Beginners
-  },
-  {
-    id: "course-006",
-    title: "Workplace Safety & Ethics",
-    description: "Understanding workplace regulations, safety protocols, and professional ethics.",
-    duration: "1 hour",
-    lessons: 5,
-    status: "locked" as const,
-    thumbnail: "https://images.unsplash.com/photo-1521791136064-7986c2920216?w=400&h=225&fit=crop",
-    youtubeUrl: "https://www.youtube.com/watch?v=1eWVEv-rKF0", // Workplace Safety & Professional Ethics
-  },
-];
-
 export default function Learning() {
+  const { t } = useTranslation();
+
+  // Course modules for Learning page
+  const modules: CourseModule[] = [
+    {
+      id: "course-001",
+      title: t("learning.microsoft.title"),
+      description: t("learning.microsoft.desc"),
+      duration: "Variable",
+      lessons: 9,
+      status: "not-started" as const,
+      thumbnail: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=225&fit=crop",
+    },
+    {
+      id: "course-002",
+      title: t("learning.email.title"),
+      description: t("learning.email.desc"),
+      duration: "6 parts",
+      lessons: 6,
+      status: "not-started" as const,
+      thumbnail: "https://images.unsplash.com/photo-1596526131083-e8c633c948d2?w=400&h=225&fit=crop",
+    },
+    {
+      id: "course-003",
+      title: "Customer Service Excellence",
+      description: "Handle customer inquiries professionally and resolve issues effectively.",
+      duration: "2.5 hours",
+      lessons: 10,
+      status: "not-started" as const,
+      thumbnail: "https://images.unsplash.com/photo-1556745753-b2904692b3cd?w=400&h=225&fit=crop",
+      youtubeUrl: "https://www.youtube.com/watch?v=zHnq3APZQJI", // Customer Service Training
+    },
+    {
+      id: "course-004",
+      title: "Data Entry & Accuracy",
+      description: "Improve typing speed and accuracy for efficient data management.",
+      duration: "3 hours",
+      lessons: 12,
+      status: "not-started" as const,
+      thumbnail: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=225&fit=crop",
+      youtubeUrl: "https://www.youtube.com/watch?v=sM_oFKIf2cg", // Data Entry Skills Training
+    },
+    {
+      id: "course-005",
+      title: "Basic Computer Skills",
+      description: "Essential computer operations, file management, and software basics.",
+      duration: "2 hours",
+      lessons: 8,
+      status: "locked" as const,
+      thumbnail: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=225&fit=crop",
+      youtubeUrl: "https://www.youtube.com/watch?v=qmeLz7vJAG8", // Computer Basics for Beginners
+    },
+    {
+      id: "course-006",
+      title: "Workplace Safety & Ethics",
+      description: "Understanding workplace regulations, safety protocols, and professional ethics.",
+      duration: "1 hour",
+      lessons: 5,
+      status: "locked" as const,
+      thumbnail: "https://images.unsplash.com/photo-1521791136064-7986c2920216?w=400&h=225&fit=crop",
+      youtubeUrl: "https://www.youtube.com/watch?v=1eWVEv-rKF0", // Workplace Safety & Professional Ethics
+    },
+  ];
+
   const [userProgress, setUserProgress] = useState<Record<string, any>>({});
   const [userId, setUserId] = useState<string | null>(null);
   const [showMicrosoftModal, setShowMicrosoftModal] = useState(false);
@@ -272,7 +275,7 @@ export default function Learning() {
   // SAFETY: Only opens the explicit youtubeUrl, never searches or generates URLs
   const handleCourseClick = (module: CourseModule) => {
     if (module.status === "locked") return;
-    
+
     // Special handling for Microsoft Skills module
     if (module.id === "course-001") {
       handleMicrosoftSkillsClick();
@@ -338,15 +341,15 @@ export default function Learning() {
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-foreground flex items-center gap-3">
                 <BookOpen className="w-8 h-8 text-primary" />
-                Learning Modules
+                {t("learning.title")}
               </h1>
               <p className="text-muted-foreground mt-1">
-                Complete modules to unlock new skills and job opportunities.
+                {t("learning.subtitle")}
               </p>
             </div>
             <Button variant="outline" size="sm" className="hidden md:flex gap-2">
               <Filter className="w-4 h-4" />
-              Filter
+              {t("learning.filter")}
             </Button>
           </div>
         </motion.div>
@@ -360,18 +363,18 @@ export default function Learning() {
         >
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-lg font-semibold text-foreground">Course Progress</h2>
+              <h2 className="text-lg font-semibold text-foreground">{t("learning.progress")}</h2>
               <p className="text-sm text-muted-foreground">
-                {completedCount} of {totalCount} modules completed
+                {t("learning.completedOf", { completed: completedCount, total: totalCount })}
               </p>
             </div>
             <div className="text-right">
               <span className="text-2xl font-bold text-primary">
-                {Math.round((completedCount / totalCount) * 100)}%
+                {totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0}%
               </span>
             </div>
           </div>
-          <ProgressBar value={(completedCount / totalCount) * 100} size="md" />
+          <ProgressBar value={totalCount > 0 ? (completedCount / totalCount) * 100 : 0} size="md" />
         </motion.div>
 
         {/* Modules Grid */}
@@ -383,16 +386,16 @@ export default function Learning() {
         >
           {modules.map((module, index) => (
             <motion.div
-              key={module.title}
+              key={module.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 * index }}
             >
-            <ModuleCard
-              {...module}
-              status={getModuleStatus(module)}
-              onClick={() => handleCourseClick(module)}
-            />
+              <ModuleCard
+                {...module}
+                status={getModuleStatus(module)}
+                onClick={() => handleCourseClick(module)}
+              />
             </motion.div>
           ))}
         </motion.div>
@@ -421,7 +424,7 @@ export default function Learning() {
                 <div className="bg-card rounded-2xl border border-border w-full max-w-4xl my-8 shadow-2xl">
                   {/* Modal Header */}
                   <div className="flex items-center justify-between p-6 border-b border-border sticky top-0 bg-card rounded-t-2xl">
-                    <h2 className="text-2xl font-bold text-foreground">Microsoft Skills</h2>
+                    <h2 className="text-2xl font-bold text-foreground">{t("learning.microsoft.title")}</h2>
                     <button
                       onClick={() => setShowMicrosoftModal(false)}
                       className="p-2 hover:bg-accent rounded-lg transition-colors"
@@ -432,19 +435,18 @@ export default function Learning() {
 
                   {/* Level Selection */}
                   <div className="p-6 border-b border-border">
-                    <p className="text-sm text-muted-foreground mb-4">Select your learning level:</p>
+                    <p className="text-sm text-muted-foreground mb-4">{t("learning.microsoft.levelSelect")}</p>
                     <div className="flex flex-col sm:flex-row gap-3">
                       {(["beginner", "intermediate", "advanced"] as const).map((level) => (
                         <Button
                           key={level}
                           onClick={() => setSelectedLevel(level)}
-                          className={`flex-1 py-3 font-semibold transition-all ${
-                            selectedLevel === level
+                          className={`flex-1 py-3 font-semibold transition-all ${selectedLevel === level
                               ? "bg-primary text-primary-foreground shadow-lg"
                               : "bg-muted text-foreground hover:bg-accent"
-                          }`}
+                            }`}
                         >
-                          <span className="capitalize">{level} Level</span>
+                          <span className="capitalize">{t(`learning.levels.${level}`)}</span>
                         </Button>
                       ))}
                     </div>
@@ -492,8 +494,8 @@ export default function Learning() {
                   {/* Header */}
                   <div className="p-6 border-b border-border flex justify-between items-center bg-gradient-to-r from-blue-500/10 to-purple-500/10">
                     <div>
-                      <h2 className="text-2xl font-bold text-foreground">Email Communication Skills</h2>
-                      <p className="text-sm text-muted-foreground mt-1">Learn professional email communication techniques</p>
+                      <h2 className="text-2xl font-bold text-foreground">{t("learning.email.title")}</h2>
+                      <p className="text-sm text-muted-foreground mt-1">{t("learning.email.desc")}</p>
                     </div>
                     <button
                       onClick={() => setShowEmailModal(false)}

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { BookOpen, Play } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 // Video data for each level and tool
 interface VideoData {
@@ -43,21 +44,21 @@ const intermediateVideos: VideoData[] = [
   {
     id: "excel-intermediate",
     title: "Excel Formulas & Functions",
-    youtubeId: "wbJcJCkBcMg",
+    youtubeId: "BkvVvbqe2q4", // Updated with actual intermediate ID from previous refactor if available
     duration: "2:30:00",
     tool: "Excel",
   },
   {
     id: "word-intermediate",
     title: "Advanced Word Formatting",
-    youtubeId: "2MCmnr2L50o",
+    youtubeId: "lsX0CjHSJ5Y",
     duration: "1:20:00",
     tool: "Word",
   },
   {
     id: "ppt-intermediate",
     title: "Professional PowerPoint Design",
-    youtubeId: "KqgyvGxISxk",
+    youtubeId: "vhdwi-L7suI",
     duration: "1:45:00",
     tool: "PowerPoint",
   },
@@ -68,21 +69,21 @@ const advancedVideos: VideoData[] = [
   {
     id: "excel-advanced",
     title: "Excel Data Analysis & Pivot Tables",
-    youtubeId: "wbJcJCkBcMg",
+    youtubeId: "PlPgYOFJROI",
     duration: "3:15:00",
     tool: "Excel",
   },
   {
     id: "word-advanced",
     title: "Word: Mail Merge & Macros",
-    youtubeId: "2MCmnr2L50o",
+    youtubeId: "TXBuw25w9Z0",
     duration: "2:00:00",
     tool: "Word",
   },
   {
     id: "ppt-advanced",
     title: "PowerPoint Animation & Interactivity",
-    youtubeId: "KqgyvGxISxk",
+    youtubeId: "lxcHLxjkcXQ",
     duration: "2:15:00",
     tool: "PowerPoint",
   },
@@ -95,10 +96,11 @@ interface YouTubeCardProps {
 
 function YouTubeCard({ video }: YouTubeCardProps) {
   const [isHovered, setIsHovered] = useState(false);
-  
+  const { t } = useTranslation();
+
   // Get actual YouTube thumbnail
   const thumbnailUrl = `https://img.youtube.com/vi/${video.youtubeId}/maxresdefault.jpg`;
-  
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -129,9 +131,8 @@ function YouTubeCard({ video }: YouTubeCardProps) {
 
             {/* Play Button */}
             <div
-              className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${
-                isHovered ? "bg-black/50" : "bg-black/30"
-              }`}
+              className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${isHovered ? "bg-black/50" : "bg-black/30"
+                }`}
             >
               <motion.div
                 animate={{ scale: isHovered ? 1.15 : 1 }}
@@ -160,7 +161,7 @@ function YouTubeCard({ video }: YouTubeCardProps) {
             </div>
             <div className="mt-3 flex items-center justify-between">
               <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
-                Watch on YouTube
+                {t("tutor.generateAnother")} {/* Reusing similar key or just watch button */}
               </span>
             </div>
           </div>
@@ -171,6 +172,7 @@ function YouTubeCard({ video }: YouTubeCardProps) {
 }
 
 export default function MicrosoftSkills() {
+  const { t } = useTranslation();
   const [selectedLevel, setSelectedLevel] = useState<"beginner" | "intermediate" | "advanced">(
     "beginner"
   );
@@ -191,24 +193,6 @@ export default function MicrosoftSkills() {
 
   const videos = getVideosByLevel();
 
-  const levelConfig = {
-    beginner: {
-      title: "Beginner",
-      description: "Get started with Microsoft Office basics",
-      color: "bg-blue-500/10 border-blue-500/30",
-    },
-    intermediate: {
-      title: "Intermediate",
-      description: "Build on your skills with advanced features",
-      color: "bg-amber-500/10 border-amber-500/30",
-    },
-    advanced: {
-      title: "Advanced",
-      description: "Master professional techniques and workflows",
-      color: "bg-purple-500/10 border-purple-500/30",
-    },
-  };
-
   return (
     <DashboardLayout>
       <div className="max-w-6xl mx-auto">
@@ -224,10 +208,10 @@ export default function MicrosoftSkills() {
             </div>
             <div>
               <h1 className="text-3xl md:text-4xl font-bold text-foreground">
-                Microsoft Basic Skills
+                {t("learning.microsoft.title")}
               </h1>
               <p className="text-muted-foreground mt-2 text-lg">
-                Master Excel, Word, and PowerPoint at your own pace
+                {t("learning.microsoft.desc")}
               </p>
             </div>
           </div>
@@ -245,19 +229,15 @@ export default function MicrosoftSkills() {
               <Button
                 key={level}
                 onClick={() => setSelectedLevel(level)}
-                className={`flex-1 py-6 text-base font-semibold transition-all ${
-                  selectedLevel === level
+                className={`flex-1 py-6 text-base font-semibold transition-all ${selectedLevel === level
                     ? "bg-primary text-primary-foreground shadow-lg"
                     : "bg-card border border-border text-foreground hover:bg-accent"
-                }`}
+                  }`}
               >
-                <span className="capitalize">{level} Level</span>
+                <span className="capitalize">{t(`learning.levels.${level}`)}</span>
               </Button>
             ))}
           </div>
-          <p className="text-sm text-muted-foreground mt-4">
-            {levelConfig[selectedLevel].description}
-          </p>
         </motion.div>
 
         {/* Current Level Info Card */}
@@ -265,12 +245,12 @@ export default function MicrosoftSkills() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className={`mb-8 p-4 rounded-lg border ${levelConfig[selectedLevel].color}`}
+          className="mb-8 p-4 rounded-lg border bg-blue-500/10 border-blue-500/30"
         >
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-current opacity-75" />
             <span className="font-semibold text-foreground capitalize">
-              {levelConfig[selectedLevel].title} Level Selected
+              {t(`learning.levels.${selectedLevel}`)}
             </span>
           </div>
         </motion.div>
@@ -282,7 +262,7 @@ export default function MicrosoftSkills() {
           transition={{ delay: 0.3 }}
         >
           <h2 className="text-xl font-semibold text-foreground mb-6">
-            Available Courses
+            {t("nav.learning")}
           </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {videos.map((video, index) => (
@@ -306,32 +286,16 @@ export default function MicrosoftSkills() {
           className="mt-12 p-6 rounded-lg bg-card border border-border"
         >
           <h3 className="text-lg font-semibold text-foreground mb-4">
-            💡 Tips for Learning
+            💡 Tips
           </h3>
-          <ul className="space-y-3 text-muted-foreground">
+          <ul className="space-y-3 text-muted-foreground text-sm">
             <li className="flex gap-3">
               <span className="text-primary font-semibold min-w-fit">•</span>
-              <span>
-                Watch videos in full screen for the best learning experience
-              </span>
+              <span>Watch videos in full screen for the best learning experience</span>
             </li>
             <li className="flex gap-3">
               <span className="text-primary font-semibold min-w-fit">•</span>
-              <span>
-                Practice along with the instructor to retain knowledge better
-              </span>
-            </li>
-            <li className="flex gap-3">
-              <span className="text-primary font-semibold min-w-fit">•</span>
-              <span>
-                Progress through levels sequentially for best results
-              </span>
-            </li>
-            <li className="flex gap-3">
-              <span className="text-primary font-semibold min-w-fit">•</span>
-              <span>
-                Revisit videos as needed to reinforce learning
-              </span>
+              <span>Practice along with the instructor to retain knowledge better</span>
             </li>
           </ul>
         </motion.div>

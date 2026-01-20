@@ -4,6 +4,7 @@ import { SkillCard } from "@/components/SkillCard";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import {
   BookOpen,
   Trophy,
@@ -35,40 +36,8 @@ interface UserStats {
   overallProgress: number;
 }
 
-const skillsData = [
-  {
-    id: "skill-001",
-    title: "Microsoft Excel Basics",
-    description: "Learn spreadsheet fundamentals",
-    status: "not-started" as const,
-  },
-  {
-    id: "skill-002",
-    title: "Email Communication",
-    description: "Professional email writing skills",
-    status: "not-started" as const,
-  },
-  {
-    id: "skill-003",
-    title: "Customer Service",
-    description: "Handling customer interactions",
-    status: "not-started" as const,
-  },
-  {
-    id: "skill-004",
-    title: "Data Entry Specialist",
-    description: "Fast and accurate data input",
-    status: "locked" as const,
-  },
-];
-
-const quickActions = [
-  { label: "Continue Learning", icon: BookOpen, path: "/learning", color: "primary" },
-  { label: "Update Resume", icon: Target, path: "/resume", color: "primary" },
-  { label: "Ask AI Tutor", icon: Zap, path: "/tutor", color: "success" },
-];
-
 export default function Dashboard() {
+  const { t } = useTranslation();
   const [userName, setUserName] = useState<string | null>(null);
   const [userFirstName, setUserFirstName] = useState<string>("");
   const [userId, setUserId] = useState<string | null>(null);
@@ -81,6 +50,39 @@ export default function Dashboard() {
     jobMatch: 0,
     overallProgress: 0,
   });
+
+  const skillsData = [
+    {
+      id: "skill-001",
+      title: "Microsoft Excel Basics",
+      description: "Learn spreadsheet fundamentals",
+      status: "not-started" as const,
+    },
+    {
+      id: "skill-002",
+      title: "Email Communication",
+      description: "Professional email writing skills",
+      status: "not-started" as const,
+    },
+    {
+      id: "skill-003",
+      title: "Customer Service",
+      description: "Handling customer interactions",
+      status: "not-started" as const,
+    },
+    {
+      id: "skill-004",
+      title: "Data Entry Specialist",
+      description: "Fast and accurate data input",
+      status: "locked" as const,
+    },
+  ];
+
+  const quickActions = [
+    { label: t("dashboard.quickActions.continueLearning"), icon: BookOpen, path: "/learning", color: "primary" },
+    { label: t("dashboard.quickActions.updateResume"), icon: Target, path: "/resume", color: "primary" },
+    { label: t("dashboard.quickActions.askAiTutor"), icon: Zap, path: "/tutor", color: "success" },
+  ];
 
   useEffect(() => {
     // Get user data from localStorage
@@ -177,10 +179,10 @@ export default function Dashboard() {
           className="mb-8"
         >
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-            {userFirstName ? `Welcome back, ${userFirstName} 👋` : "Welcome back 👋"}
+            {userFirstName ? t("dashboard.welcome", { name: userFirstName }) : t("dashboard.welcomeGeneric")}
           </h1>
           <p className="text-muted-foreground mt-1">
-            Continue your learning journey and get closer to your dream job.
+            {t("dashboard.subtitle")}
           </p>
         </motion.div>
 
@@ -197,8 +199,8 @@ export default function Dashboard() {
                 <Trophy className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-foreground">Level {Math.floor(stats.coursesCompleted / 2) + 1}</div>
-                <div className="text-sm text-muted-foreground">Competency</div>
+                <div className="text-2xl font-bold text-foreground">{t("dashboard.stats.level", { level: Math.floor(stats.coursesCompleted / 2) + 1 })}</div>
+                <div className="text-sm text-muted-foreground">{t("dashboard.stats.competency")}</div>
               </div>
             </div>
           </div>
@@ -210,7 +212,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <div className="text-2xl font-bold text-foreground">{stats.skillsLearned}/{skillsData.filter(s => s.status !== "locked").length}</div>
-                <div className="text-sm text-muted-foreground">Skills Learned</div>
+                <div className="text-sm text-muted-foreground">{t("dashboard.stats.skillsLearned")}</div>
               </div>
             </div>
           </div>
@@ -222,7 +224,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <div className="text-2xl font-bold text-foreground">{stats.jobMatch}%</div>
-                <div className="text-sm text-muted-foreground">Job Match</div>
+                <div className="text-sm text-muted-foreground">{t("dashboard.stats.jobMatch")}</div>
               </div>
             </div>
           </div>
@@ -234,7 +236,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <div className="text-2xl font-bold text-foreground">{stats.hoursSpent}h</div>
-                <div className="text-sm text-muted-foreground">Time Spent</div>
+                <div className="text-sm text-muted-foreground">{t("dashboard.stats.timeSpent")}</div>
               </div>
             </div>
           </div>
@@ -249,16 +251,16 @@ export default function Dashboard() {
         >
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-lg font-semibold text-foreground">Learning Progress</h2>
-              <p className="text-sm text-muted-foreground">Data Entry & Office Skills Path</p>
+              <h2 className="text-lg font-semibold text-foreground">{t("dashboard.learningProgress")}</h2>
+              <p className="text-sm text-muted-foreground">{t("dashboard.pathName")}</p>
             </div>
             <span className="text-2xl font-bold text-primary">{stats.overallProgress}%</span>
           </div>
           <ProgressBar value={stats.overallProgress} size="lg" />
           <p className="text-sm text-muted-foreground mt-3">
             {stats.coursesCompleted === 0
-              ? "Start a course to begin your learning journey!"
-              : `You have completed ${stats.lessonsCompleted} lessons. Keep going!`}
+              ? t("dashboard.startJourney")
+              : t("dashboard.keepGoing", { count: stats.lessonsCompleted })}
           </p>
         </motion.div>
 
@@ -289,10 +291,10 @@ export default function Dashboard() {
           transition={{ delay: 0.4 }}
         >
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-foreground">Your Skills</h2>
+            <h2 className="text-lg font-semibold text-foreground">{t("dashboard.yourSkills")}</h2>
             <Link to="/learning">
               <Button variant="ghost" size="sm" className="gap-1">
-                View All
+                {t("dashboard.viewAll")}
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>

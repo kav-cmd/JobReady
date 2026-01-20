@@ -1,0 +1,228 @@
+{
+    "common": {
+        "login": "Login",
+        "signup": "Sign Up",
+        "getStarted": "Get Started Free",
+        "alreadyHaveAccount": "I already have an account",
+        "freeToStart": "100% Free to Start",
+        "noCreditCard": "No Credit Card Required",
+        "allRightsReserved": "© 2025 JobReady Vocational Assistant. All rights reserved."
+    },
+    "landing": {
+        "heroTitle": "Learn Skills.",
+        "heroSubtitle": "Get Jobs.",
+        "heroDescription": "Your AI-powered vocational assistant. Discover your strengths, learn in-demand skills, and get matched with the perfect job opportunities.",
+        "availableIn": "Available in 10+ Indian Languages",
+        "stats": {
+            "students": "Students Trained",
+            "courses": "Skill Courses",
+            "placements": "Job Placements",
+            "successRate": "Success Rate"
+        },
+        "features": {
+            "title": "Your Path to Employment",
+            "subtitle": "A complete ecosystem designed to take you from learning to earning",
+            "assessment": {
+                "title": "Skill Assessment",
+                "desc": "Take our quick quiz to discover your strengths and areas for growth"
+            },
+            "vocational": {
+                "title": "Vocational Learning",
+                "desc": "Access curated courses in high-demand skills like IT, healthcare, and trades"
+            },
+            "matching": {
+                "title": "Smart Job Matching",
+                "desc": "Get matched with jobs that fit your skills and career goals"
+            },
+            "resume": {
+                "title": "Resume Builder",
+                "desc": "Create a professional resume that highlights your competencies"
+            }
+        },
+        "howItWorks": {
+            "title": "How It Works",
+            "subtitle": "Three simple steps to transform your career",
+            "step1": {
+                "title": "Take Assessment",
+                "desc": "Complete a quick skill assessment to identify your strengths"
+            },
+            "step2": {
+                "title": "Learn & Grow",
+                "desc": "Access personalized learning paths in your chosen field"
+            },
+            "step3": {
+                "title": "Get Matched",
+                "desc": "Apply to jobs that match your new skills and interests"
+            }
+        },
+        "readyToStart": {
+            "title": "Ready to Start Your Journey?",
+            "desc": "Join thousands of students who have transformed their careers with JobReady",
+            "createAccount": "Create Free Account"
+        }
+    },
+    "login": {
+        "backHome": "Back to Home",
+        "welcomeBack": "Welcome back",
+        "signInToContinue": "Sign in to continue your learning journey",
+        "emailLabel": "Email address",
+        "phoneLabel": "Phone number",
+        "passwordLabel": "Password",
+        "forgotPassword": "Forgot password?",
+        "signInButton": "Sign In",
+        "noAccount": "Don't have an account?",
+        "createOneFree": "Create one for free",
+        "careerJourney": "Your Career Journey Starts Here",
+        "careerDesc": "Access personalized skill development, job matching, and career guidance all in one place.",
+        "loggingIn": "Logging you in...",
+        "welcomeTitle": "Welcome back!"
+    },
+    "signup": {
+        "createAccount": "Create your account",
+        "verifyEmail": "Verify your email",
+        "startJourney": "Start your journey to a better career",
+        "enterOtp": "Enter the 6-digit code sent to your email",
+        "details": "Details",
+        "verify": "Verify",
+        "fullName": "Full name",
+        "emailAddress": "Email address",
+        "phoneNumber": "Phone number",
+        "createPassword": "Create password",
+        "passwordMinChars": "Min 6 characters",
+        "verificationCode": "Verification Code",
+        "enter6Digit": "Enter 6-digit code",
+        "didntReceive": "Didn't receive the code?",
+        "resend": "Resend",
+        "resending": "Resending...",
+        "continue": "Continue",
+        "verifyAndCreate": "Verify & Create Account",
+        "goBack": "Go Back",
+        "alreadyHaveAccount": "Already have an account?",
+        "signIn": "Sign in",
+        "joinLearners": "Join 50,000+ Learners",
+        "learnersDesc": "Get access to personalized skill development, AI-powered tutoring, and job matching.",
+        "fillAllFields": "Please fill in all fields",
+        "otpSent": "OTP Sent!",
+        "otpSentTo": "OTP has been sent to {{email}}",
+        "validOtp": "Please enter a valid 6-digit OTP",
+        "success": "Success!",
+        "emailVerified": "Email verified successfully. Setting up your profile...",
+        "retryOtp": "Failed to send OTP",
+        "verifyFailed": "Failed to verify OTP",
+        "resendFailed": "Failed to resend OTP"
+    },
+    "nav": {
+        "dashboard": "Dashboard",
+        "learning": "Learning",
+        "resume": "Resume",
+        "aiTutor": "AI Tutor",
+        "settings": "Settings",
+        "viewProfile": "View Profile",
+        "logout": "Logout"
+    },
+    "dashboard": {
+        "welcome": "Welcome back, {{name}} 👋",
+        "welcomeGeneric": "Welcome back 👋",
+        "subtitle": "Continue your learning journey and get closer to your dream job.",
+        "stats": {
+            "level": "Level {{level}}",
+            "competency": "Competency",
+            "skillsLearned": "Skills Learned",
+            "jobMatch": "Job Match",
+            "timeSpent": "Time Spent"
+        },
+        "learningProgress": "Learning Progress",
+        "pathName": "Data Entry & Office Skills Path",
+        "keepGoing": "You have completed {{count}} lessons. Keep going!",
+        "startJourney": "Start a course to begin your learning journey!",
+        "quickActions": {
+            "continueLearning": "Continue Learning",
+            "updateResume": "Update Resume",
+            "askAiTutor": "Ask AI Tutor"
+        },
+        "yourSkills": "Your Skills",
+        "viewAll": "View All"
+    },
+    "settings": {
+        "title": "Settings",
+        "subtitle": "Manage your account and preferences",
+        "languageSection": {
+            "title": "Language Preference",
+            "label": "Display Language",
+            "placeholder": "Select language",
+            "description": "This will change the interface language and learning content."
+        },
+        "notifications": {
+            "title": "Notifications",
+            "pushTitle": "Push Notifications",
+            "pushDesc": "Receive alerts for new jobs and course updates",
+            "emailTitle": "Email Updates",
+            "emailDesc": "Weekly progress reports and job recommendations"
+        },
+        "password": {
+            "title": "Change Password",
+            "current": "Current Password",
+            "new": "New Password",
+            "confirm": "Confirm New Password",
+            "updateButton": "Update Password"
+        },
+        "privacy": {
+            "title": "Privacy & Data",
+            "desc": "Your data is encrypted and securely stored. We never share your personal information with third parties without your consent.",
+            "download": "Download My Data",
+            "delete": "Delete Account"
+        },
+        "saveChanges": "Save Changes",
+        "logout": "Log Out",
+        "saved": "Settings Saved",
+        "savedDesc": "Your preferences have been updated.",
+        "logoutTitle": "Logged Out",
+        "logoutDesc": "See you soon!"
+    },
+    "tutor": {
+        "title": "AI Tutor",
+        "subtitle": "Get personalized quizzes, study notes, and answers to your doubts",
+        "mode": "Mode",
+        "quiz": "Quiz",
+        "notes": "Notes",
+        "doubt": "Doubt",
+        "course": "Course",
+        "topic": "Topic",
+        "topicPlaceholder": "e.g., Keyboard Shortcuts",
+        "yourQuestion": "Your Question",
+        "askPlaceholder": "Ask your question...",
+        "generate": "Generate",
+        "generating": "Generating...",
+        "noContent": "No content generated yet",
+        "generatePrompt": "Select a mode, course, and topic, then click Generate to get started!",
+        "quizInfo": "📝 This quiz has {{count}} questions. Answer carefully and review explanations!",
+        "correct": "✅ Correct!",
+        "incorrect": "❌ Incorrect",
+        "responseToQuestion": "💡 Response to your question:",
+        "generateAnother": "Generate Another",
+        "errorSelect": "Please select course and topic",
+        "errorQuestion": "Please enter your question",
+        "successGenerated": "{{type}} generated successfully"
+    },
+    "learning": {
+        "title": "Learning Modules",
+        "subtitle": "Complete modules to unlock new skills and job opportunities.",
+        "filter": "Filter",
+        "progress": "Course Progress",
+        "completedOf": "{{completed}} of {{total}} modules completed",
+        "levels": {
+            "beginner": "Beginner Level",
+            "intermediate": "Intermediate Level",
+            "advanced": "Advanced Level"
+        },
+        "microsoft": {
+            "title": "Microsoft Skills",
+            "desc": "Master Excel, Word, and PowerPoint at your own pace.",
+            "levelSelect": "Select your learning level:"
+        },
+        "email": {
+            "title": "Email Communication Skills",
+            "desc": "Learn professional email etiquette, writing techniques, and workplace communication."
+        }
+    }
+}

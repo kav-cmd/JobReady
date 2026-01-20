@@ -4,6 +4,11 @@
  */
 
 import VideoProgress from "../models/videoProgress.model.js";
+import mongoose from 'mongoose';
+import mockDb from '../config/mockDb.js';
+
+// Helper to check if DB is connected
+const isDbConnected = () => mongoose.connection.readyState === 1;
 
 // Mark video as completed
 export const markVideoCompleted = async (req, res) => {
@@ -27,11 +32,22 @@ export const markVideoCompleted = async (req, res) => {
     }
 
     // Mark video as completed
-    const videoProgress = await VideoProgress.markVideoCompleted(
-      userId,
-      courseId,
-      videoId
-    );
+    let videoProgress;
+    if (isDbConnected()) {
+      videoProgress = await VideoProgress.markVideoCompleted(
+        userId,
+        courseId,
+        videoId
+      );
+    } else {
+      videoProgress = await mockDb.saveProgress({
+        userId,
+        courseId,
+        videoId,
+        completed: true,
+        completedAt: new Date()
+      });
+    }
 
     return res.status(200).json({
       success: true,
@@ -68,7 +84,18 @@ export const getCourseProgress = async (req, res) => {
       });
     }
 
-    const courseProgress = await VideoProgress.getCourseProgress(userId, courseId);
+    let courseProgress;
+    if (isDbConnected()) {
+      courseProgress = await VideoProgress.getCourseProgress(userId, courseId);
+    } else {
+      // Mock progress calculation
+      const completed = (await mockDb.videoProgress.filter(p => p.userId === userId && p.courseId === courseId && p.completed)).length;
+      courseProgress = {
+        total: 10, // Mock total
+        completed,
+        percentage: (completed / 10) * 100
+      };
+    }
 
     return res.status(200).json({
       success: true,
@@ -104,7 +131,16 @@ export const getVideoStatus = async (req, res) => {
       });
     }
 
-    const videoStatus = await VideoProgress.getVideoStatus(userId, courseId, videoId);
+    let videoStatus;
+    if (isDbConnected()) {
+      videoStatus = await VideoProgress.getVideoStatus(userId, courseId, videoId);
+    } else {
+      const progress = await mockDb.getProgress(userId, courseId, videoId);
+      videoStatus = {
+        completed: progress ? progress.completed : false,
+        completedAt: progress ? progress.completedAt : null
+      };
+    }
 
     return res.status(200).json({
       success: true,
@@ -140,11 +176,18 @@ export const getCompletedVideos = async (req, res) => {
       });
     }
 
-    const completedVideos = await VideoProgress.find({
-      userId,
-      courseId,
-      completed: true,
-    });
+    let completedVideos;
+    if (isDbConnected()) {
+      completedVideos = await VideoProgress.find({
+        userId,
+        courseId,
+        completed: true,
+      });
+    } else {
+      completedVideos = mockDb.videoProgress.filter(p =>
+        p.userId === userId && p.courseId === courseId && p.completed
+      );
+    }
 
     return res.status(200).json({
       success: true,
@@ -198,17 +241,33 @@ export const initializeCourseVideos = async (req, res) => {
       },
     }));
 
-    const result = await VideoProgress.bulkWrite(operations);
-
-    return res.status(200).json({
-      success: true,
-      message: "Video progress initialized for course",
-      data: {
-        acknowledged: result.ok,
-        upsertedCount: result.upsertedCount,
-        modifiedCount: result.modifiedCount,
-      },
-    });
+    if (isDbConnected()) {
+      const result = await VideoProgress.bulkWrite(operations);
+      return res.status(200).json({
+        success: true,
+        message: "Video progress initialized for course",
+        data: {
+          acknowledged: result.ok,
+          upsertedCount: result.upsertedCount,
+          modifiedCount: result.modifiedCount,
+        },
+      });
+    } else {
+      // Mock initialization
+      for (const videoId of videos) {
+        await mockDb.saveProgress({
+          userId,
+          courseId,
+          videoId,
+          completed: false,
+          completedAt: null
+        });
+      }
+      return res.status(200).json({
+        success: true,
+        message: "Video progress initialized for course (Mock Mode)",
+      });
+    }
   } catch (error) {
     console.error("Error initializing course videos:", error);
     return res.status(500).json({

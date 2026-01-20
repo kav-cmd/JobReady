@@ -10,22 +10,31 @@ import {
   Menu,
   X,
   Zap,
+  Globe,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
-
-const navItems = [
-  { label: "Dashboard", icon: Home, path: "/dashboard" },
-  { label: "Learning", icon: BookOpen, path: "/learning" },
-  { label: "Resume", icon: FileText, path: "/resume" },
-  { label: "AI Tutor", icon: MessageCircle, path: "/tutor" },
-  { label: "Settings", icon: Settings, path: "/settings" },
-];
+import { useTranslation } from "react-i18next";
 
 export function Navigation() {
+  const { t, i18n } = useTranslation();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userName, setUserName] = useState("User");
+
+  const navItems = [
+    { label: t("nav.dashboard"), icon: Home, path: "/dashboard" },
+    { label: t("nav.learning"), icon: BookOpen, path: "/learning" },
+    { label: t("nav.resume"), icon: FileText, path: "/resume" },
+    { label: t("nav.aiTutor"), icon: MessageCircle, path: "/tutor" },
+    { label: t("nav.settings"), icon: Settings, path: "/settings" },
+  ];
+
+  const languages = [
+    { code: "en", label: "English" },
+    { code: "hi", label: "हिन्दी" },
+    { code: "kn", label: "ಕನ್ನಡ" },
+  ];
 
   useEffect(() => {
     // Get user data from localStorage
@@ -41,6 +50,10 @@ export function Navigation() {
       }
     }
   }, []);
+
+  const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    i18n.changeLanguage(e.target.value);
+  };
 
   return (
     <>
@@ -76,6 +89,25 @@ export function Navigation() {
           </ul>
         </div>
 
+        {/* Desktop Language Selector */}
+        <div className="px-6 py-4 border-t border-border">
+          <div className="flex items-center gap-2 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            <Globe className="w-3 h-3" />
+            Language
+          </div>
+          <select
+            value={i18n.language}
+            onChange={handleLanguageChange}
+            className="w-full text-sm bg-accent/50 border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            {languages.map((lang) => (
+              <option key={lang.code} value={lang.code}>
+                {lang.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <div className="p-4 border-t border-border">
           <Link
             to="/profile"
@@ -86,7 +118,7 @@ export function Navigation() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-foreground truncate">{userName}</p>
-              <p className="text-xs text-muted-foreground truncate">View Profile</p>
+              <p className="text-xs text-muted-foreground truncate">{t("nav.viewProfile")}</p>
             </div>
           </Link>
         </div>
@@ -101,13 +133,26 @@ export function Navigation() {
           <span className="font-semibold text-lg text-foreground">JobReady</span>
         </Link>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        >
-          {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </Button>
+        <div className="flex items-center gap-2">
+          <select
+            value={i18n.language}
+            onChange={handleLanguageChange}
+            className="text-xs bg-accent/50 border border-border rounded-lg px-2 py-1 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            {languages.map((lang) => (
+              <option key={lang.code} value={lang.code}>
+                {lang.label.substring(0, 2).toUpperCase()}
+              </option>
+            ))}
+          </select>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </Button>
+        </div>
       </nav>
 
       {/* Mobile Menu Overlay */}
