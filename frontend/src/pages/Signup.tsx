@@ -6,8 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Briefcase, Mail, Lock, Phone, User, ArrowLeft, CheckCircle, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 export default function Signup() {
+  const { t } = useTranslation();
   const [step, setStep] = useState<"details" | "verify">("details");
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
@@ -22,15 +24,15 @@ export default function Signup() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5001/api";
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.email || !formData.phone || !formData.password) {
       toast({
-        title: "Error",
-        description: "Please fill in all fields",
+        title: t("signup.fillAllFields"),
+        description: t("signup.fillAllFields"),
         variant: "destructive",
       });
       return;
@@ -55,13 +57,13 @@ export default function Signup() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Failed to send OTP");
+        throw new Error(data.message || t("signup.retryOtp"));
       }
 
       setStep("verify");
       toast({
-        title: "OTP Sent!",
-        description: `OTP has been sent to ${formData.phone}`,
+        title: t("signup.otpSent"),
+        description: t("signup.otpSentTo", { email: formData.email }),
       });
 
       // For development - show OTP if available
@@ -74,7 +76,7 @@ export default function Signup() {
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to send OTP",
+        description: error instanceof Error ? error.message : t("signup.retryOtp"),
         variant: "destructive",
       });
     } finally {
@@ -88,7 +90,7 @@ export default function Signup() {
     if (!formData.otp || formData.otp.length !== 6) {
       toast({
         title: "Error",
-        description: "Please enter a valid 6-digit OTP",
+        description: t("signup.validOtp"),
         variant: "destructive",
       });
       return;
@@ -110,7 +112,7 @@ export default function Signup() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Failed to verify OTP");
+        throw new Error(data.message || t("signup.verifyFailed"));
       }
 
       // Save token to localStorage
@@ -118,8 +120,8 @@ export default function Signup() {
       localStorage.setItem("user", JSON.stringify(data.user));
 
       toast({
-        title: "Success!",
-        description: "Account created successfully. Setting up your profile...",
+        title: t("signup.success"),
+        description: t("signup.emailVerified"),
       });
 
       setTimeout(() => {
@@ -128,7 +130,7 @@ export default function Signup() {
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to verify OTP",
+        description: error instanceof Error ? error.message : t("signup.verifyFailed"),
         variant: "destructive",
       });
     } finally {
@@ -152,12 +154,12 @@ export default function Signup() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Failed to resend OTP");
+        throw new Error(data.message || t("signup.resendFailed"));
       }
 
       toast({
-        title: "OTP Resent!",
-        description: `New OTP has been sent to ${formData.phone}`,
+        title: t("signup.otpSent"),
+        description: t("signup.otpSentTo", { email: formData.email }),
       });
 
       // For development - show OTP if available
@@ -172,7 +174,7 @@ export default function Signup() {
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to resend OTP",
+        description: error instanceof Error ? error.message : t("signup.resendFailed"),
         variant: "destructive",
       });
     } finally {
@@ -190,7 +192,7 @@ export default function Signup() {
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-8"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Home
+            {t("login.backHome")}
           </Link>
 
           <motion.div
@@ -206,12 +208,12 @@ export default function Signup() {
             </Link>
 
             <h1 className="text-2xl font-bold text-foreground">
-              {step === "details" ? "Create your account" : "Verify your phone"}
+              {step === "details" ? t("signup.createAccount") : t("signup.verifyEmail")}
             </h1>
             <p className="mt-2 text-muted-foreground">
               {step === "details"
-                ? "Start your journey to a better career"
-                : "Enter the 6-digit code sent to your phone"}
+                ? t("signup.startJourney")
+                : t("signup.enterOtp")}
             </p>
           </motion.div>
 
@@ -227,21 +229,20 @@ export default function Signup() {
                 <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center text-sm font-medium text-primary-foreground">
                   {step === "verify" ? <CheckCircle className="w-4 h-4" /> : "1"}
                 </div>
-                <span className="text-sm font-medium text-foreground">Details</span>
+                <span className="text-sm font-medium text-foreground">{t("signup.details")}</span>
               </div>
               <div className="flex-1 h-0.5 bg-border" />
               <div className="flex items-center gap-2">
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                    step === "verify"
-                      ? "gradient-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground"
-                  }`}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${step === "verify"
+                    ? "gradient-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
+                    }`}
                 >
                   2
                 </div>
                 <span className={`text-sm font-medium ${step === "verify" ? "text-foreground" : "text-muted-foreground"}`}>
-                  Verify
+                  {t("signup.verify")}
                 </span>
               </div>
             </div>
@@ -250,7 +251,7 @@ export default function Signup() {
               {step === "details" ? (
                 <>
                   <div className="space-y-2">
-                    <Label htmlFor="name">Full name</Label>
+                    <Label htmlFor="name">{t("signup.fullName")}</Label>
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
@@ -269,7 +270,7 @@ export default function Signup() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email address</Label>
+                    <Label htmlFor="email">{t("signup.emailAddress")}</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
@@ -288,7 +289,7 @@ export default function Signup() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Phone number</Label>
+                    <Label htmlFor="phone">{t("signup.phoneNumber")}</Label>
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
@@ -307,13 +308,13 @@ export default function Signup() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="password">Create password</Label>
+                    <Label htmlFor="password">{t("signup.createPassword")}</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
                         id="password"
                         type="password"
-                        placeholder="Min 6 characters"
+                        placeholder={t("signup.passwordMinChars")}
                         value={formData.password}
                         onChange={(e) =>
                           setFormData({ ...formData, password: e.target.value })
@@ -328,11 +329,11 @@ export default function Signup() {
                 </>
               ) : (
                 <div className="space-y-2">
-                  <Label htmlFor="otp">Verification Code</Label>
+                  <Label htmlFor="otp">{t("signup.verificationCode")}</Label>
                   <Input
                     id="otp"
                     type="text"
-                    placeholder="Enter 6-digit code"
+                    placeholder={t("signup.enter6Digit")}
                     value={formData.otp}
                     onChange={(e) => {
                       const value = e.target.value.replace(/\D/g, '').slice(0, 6);
@@ -344,23 +345,23 @@ export default function Signup() {
                     disabled={loading}
                   />
                   <p className="text-sm text-muted-foreground text-center mt-2">
-                    Didn't receive the code?{" "}
+                    {t("signup.didntReceive")}{" "}
                     <button
                       type="button"
                       onClick={handleResendOtp}
                       disabled={resendLoading}
                       className="text-primary hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {resendLoading ? "Resending..." : "Resend"}
+                      {resendLoading ? t("signup.resending") : t("signup.resend")}
                     </button>
                   </p>
                 </div>
               )}
 
-              <Button type="submit" className="w-full" size="lg" disabled={loading}>
+              <button type="submit" className="w-full h-11 px-8 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center justify-center font-medium disabled:opacity-50 disabled:cursor-not-allowed" disabled={loading}>
                 {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                {step === "details" ? "Continue" : "Verify & Create Account"}
-              </Button>
+                {step === "details" ? t("signup.continue") : t("signup.verifyAndCreate")}
+              </button>
 
               {step === "verify" && (
                 <Button
@@ -370,15 +371,15 @@ export default function Signup() {
                   onClick={() => setStep("details")}
                   disabled={loading}
                 >
-                  Go Back
+                  {t("signup.goBack")}
                 </Button>
               )}
             </form>
 
             <p className="mt-6 text-center text-sm text-muted-foreground">
-              Already have an account?{" "}
+              {t("signup.alreadyHaveAccount")}{" "}
               <Link to="/login" className="text-primary font-medium hover:underline">
-                Sign in
+                {t("signup.signIn")}
               </Link>
             </p>
           </motion.div>
@@ -392,10 +393,10 @@ export default function Signup() {
             <CheckCircle className="w-10 h-10 text-success-foreground" />
           </div>
           <h2 className="text-3xl font-bold text-foreground">
-            Join 50,000+ Learners
+            {t("signup.joinLearners")}
           </h2>
           <p className="mt-4 text-muted-foreground">
-            Get access to personalized skill development, AI-powered tutoring, and job matching.
+            {t("signup.learnersDesc")}
           </p>
         </div>
       </div>

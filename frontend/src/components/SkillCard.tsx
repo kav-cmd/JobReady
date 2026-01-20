@@ -5,7 +5,7 @@ interface SkillCardProps {
   title: string;
   description: string;
   progress: number;
-  status: "locked" | "in-progress" | "completed";
+  status: "locked" | "not-started" | "in-progress" | "completed";
   icon?: React.ReactNode;
   onClick?: () => void;
   className?: string;

@@ -6,8 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Briefcase, Mail, Lock, Phone, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 export default function Login() {
+  const { t } = useTranslation();
   const [loginMethod, setLoginMethod] = useState<"email" | "phone">("email");
   const [formData, setFormData] = useState({
     email: "",
@@ -20,8 +22,8 @@ export default function Login() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     toast({
-      title: "Welcome back!",
-      description: "Logging you in...",
+      title: t("login.welcomeTitle"),
+      description: t("login.loggingIn"),
     });
     setTimeout(() => {
       navigate("/dashboard");
@@ -38,7 +40,7 @@ export default function Login() {
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-8"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Home
+            {t("login.backHome")}
           </Link>
 
           <motion.div
@@ -53,9 +55,9 @@ export default function Login() {
               <span className="text-2xl font-bold text-foreground">JobReady</span>
             </Link>
 
-            <h1 className="text-2xl font-bold text-foreground">Welcome back</h1>
+            <h1 className="text-2xl font-bold text-foreground">{t("login.welcomeBack")}</h1>
             <p className="mt-2 text-muted-foreground">
-              Sign in to continue your learning journey
+              {t("login.signInToContinue")}
             </p>
           </motion.div>
 
@@ -75,7 +77,7 @@ export default function Login() {
                 className="flex-1"
               >
                 <Mail className="w-4 h-4 mr-2" />
-                Email
+                {t("login.emailLabel")}
               </Button>
               <Button
                 type="button"
@@ -85,14 +87,14 @@ export default function Login() {
                 className="flex-1"
               >
                 <Phone className="w-4 h-4 mr-2" />
-                Phone
+                {t("login.phoneLabel")}
               </Button>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
               {loginMethod === "email" ? (
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email address</Label>
+                  <Label htmlFor="email">{t("login.emailLabel")}</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
@@ -110,7 +112,7 @@ export default function Login() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone number</Label>
+                  <Label htmlFor="phone">{t("login.phoneLabel")}</Label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
@@ -130,12 +132,12 @@ export default function Login() {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">{t("login.passwordLabel")}</Label>
                   <Link
                     to="/forgot-password"
                     className="text-sm text-primary hover:underline"
                   >
-                    Forgot password?
+                    {t("login.forgotPassword")}
                   </Link>
                 </div>
                 <div className="relative">
@@ -155,14 +157,14 @@ export default function Login() {
               </div>
 
               <Button type="submit" className="w-full" size="lg">
-                Sign In
+                {t("login.signInButton")}
               </Button>
             </form>
 
             <p className="mt-6 text-center text-sm text-muted-foreground">
-              Don't have an account?{" "}
+              {t("login.noAccount")}{" "}
               <Link to="/signup" className="text-primary font-medium hover:underline">
-                Create one for free
+                {t("login.createOneFree")}
               </Link>
             </p>
           </motion.div>
@@ -176,10 +178,10 @@ export default function Login() {
             <Briefcase className="w-10 h-10 text-primary-foreground" />
           </div>
           <h2 className="text-3xl font-bold text-foreground">
-            Your Career Journey Starts Here
+            {t("login.careerJourney")}
           </h2>
           <p className="mt-4 text-muted-foreground">
-            Access personalized skill development, job matching, and career guidance all in one place.
+            {t("login.careerDesc")}
           </p>
         </div>
       </div>

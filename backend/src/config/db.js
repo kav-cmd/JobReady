@@ -10,7 +10,11 @@ const connectDB = async () => {
     return conn;
   } catch (error) {
     console.error(`Error: ${error.message}`);
-    process.exit(1);
+    // Only exit in production
+    if (process.env.NODE_ENV === 'production') {
+      process.exit(1);
+    }
+    console.warn('⚠️ MongoDB connection failed. Running in development mode without database.');
   }
 };
 

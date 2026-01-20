@@ -1,12 +1,41 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Initialize Gemini AI with API key from environment
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const isPlaceholderKey = !GEMINI_API_KEY || GEMINI_API_KEY === 'your_gemini_api_key_here';
+const genAI = !isPlaceholderKey ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
+
+// Mock responses for development
+const mockResponses = {
+  quiz: [
+    {
+      "question": "What is the primary purpose of a Data Entry Specialist?",
+      "options": ["To repair computers", "To input data into systems accurately", "To manage office security", "To design websites"],
+      "correctAnswer": 1,
+      "explanation": "Data Entry Specialists are responsible for transcribing and entering data into electronic systems with high precision."
+    },
+    {
+      "question": "Which software is most commonly used for data organization and entry?",
+      "options": ["Adobe Photoshop", "Microsoft Excel", "VLC Media Player", "Windows Media Player"],
+      "correctAnswer": 1,
+      "explanation": "Microsoft Excel is the industry standard for tabulating, organizing, and managing structured data."
+    }
+  ],
+  notes: `### Key Principles of Professional Data Entry
+
+- **Accuracy over Speed**: Always prioritize correct data input over fast typing.
+- **Data Verification**: Double-check entries against source documents.
+- **Ergonomics**: Maintain proper posture to prevent strain during long sessions.
+- **Confidentiality**: Handle sensitive information according to privacy laws.
+- **Shortcut Proficiency**: Use keyboard shortcuts to improve efficiency safely.`,
+  doubt: `Data entry requires attention to detail. Common software used includes spreadsheets like Excel or Google Sheets, and database management systems. Accuracy is crucial because errors in data can lead to significant business mistakes downstream.`
+};
 
 /**
  * Get the Gemini Pro model
  */
 const getModel = () => {
+  if (isPlaceholderKey) return null;
   return genAI.getGenerativeModel({ model: 'gemini-pro' });
 };
 
@@ -89,13 +118,17 @@ export const callGeminiAPI = async (courseName, topic, userQuery, mode) => {
     // Generate prompt based on mode
     const prompt = generatePrompt(courseName, topic, userQuery || '', mode);
 
-    // Get the model
-    const model = getModel();
-
     // Generate content using Gemini API
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    let text;
+    if (isPlaceholderKey) {
+      console.warn('⚠️ Gemini API key is placeholder. Using mock response.');
+      text = mode === 'quiz' ? JSON.stringify(mockResponses.quiz) : mockResponses[mode];
+    } else {
+      const model = getModel();
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      text = response.text();
+    }
 
     // Parse JSON responses for quiz mode
     let parsedContent = text;
@@ -133,13 +166,20 @@ export const callGeminiAPI = async (courseName, topic, userQuery, mode) => {
  * Validate Gemini API connection
  */
 export const validateGeminiConnection = async () => {
+  if (isPlaceholderKey) {
+    return {
+      success: true,
+      message: 'Gemini API is running in MOCK mode (placeholder key detected)'
+    };
+  }
   try {
     const model = getModel();
-    
+    if (!model) throw new Error('Model initialization failed');
+
     // Simple test call
     const result = await model.generateContent('Say "Hello" in one word.');
     const response = await result.response;
-    
+
     return {
       success: true,
       message: 'Gemini API connection successful'

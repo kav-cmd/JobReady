@@ -18,23 +18,22 @@ import {
   Shield,
   LogOut,
   Bell,
-  Moon,
-  User,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 const languages = [
   { code: "en", label: "English" },
   { code: "hi", label: "हिन्दी (Hindi)" },
-  { code: "ta", label: "தமிழ் (Tamil)" },
-  { code: "te", label: "తెలుగు (Telugu)" },
+  { code: "kn", label: "ಕನ್ನಡ (Kannada)" },
 ];
 
 export default function Settings() {
+  const { t, i18n } = useTranslation();
   const [settings, setSettings] = useState({
-    language: "en",
+    language: i18n.language || "en",
     notifications: true,
     emailUpdates: true,
     darkMode: false,
@@ -42,18 +41,31 @@ export default function Settings() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  useEffect(() => {
+    if (i18n.language && i18n.language !== settings.language) {
+      setSettings(prev => ({ ...prev, language: i18n.language }));
+    }
+  }, [i18n.language]);
+
+  const handleLanguageChange = (value: string) => {
+    setSettings({ ...settings, language: value });
+    i18n.changeLanguage(value);
+  };
+
   const handleSave = () => {
     toast({
-      title: "Settings Saved",
-      description: "Your preferences have been updated.",
+      title: t("settings.saved"),
+      description: t("settings.savedDesc"),
     });
   };
 
   const handleLogout = () => {
     toast({
-      title: "Logged Out",
-      description: "See you soon!",
+      title: t("settings.logoutTitle"),
+      description: t("settings.logoutDesc"),
     });
+    // Clear user data
+    localStorage.removeItem("user");
     setTimeout(() => {
       navigate("/");
     }, 1000);
@@ -70,10 +82,10 @@ export default function Settings() {
         >
           <h1 className="text-2xl md:text-3xl font-bold text-foreground flex items-center gap-3">
             <SettingsIcon className="w-8 h-8 text-primary" />
-            Settings
+            {t("settings.title")}
           </h1>
           <p className="text-muted-foreground mt-1">
-            Manage your account and preferences
+            {t("settings.subtitle")}
           </p>
         </motion.div>
 
@@ -87,18 +99,16 @@ export default function Settings() {
           >
             <h2 className="text-lg font-semibold text-foreground flex items-center gap-2 mb-4">
               <Globe className="w-5 h-5 text-primary" />
-              Language Preference
+              {t("settings.languageSection.title")}
             </h2>
             <div className="space-y-2">
-              <Label>Display Language</Label>
+              <Label>{t("settings.languageSection.label")}</Label>
               <Select
                 value={settings.language}
-                onValueChange={(value) =>
-                  setSettings({ ...settings, language: value })
-                }
+                onValueChange={handleLanguageChange}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select language" />
+                  <SelectValue placeholder={t("settings.languageSection.placeholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   {languages.map((lang) => (
@@ -109,7 +119,7 @@ export default function Settings() {
                 </SelectContent>
               </Select>
               <p className="text-sm text-muted-foreground">
-                This will change the interface language and learning content.
+                {t("settings.languageSection.description")}
               </p>
             </div>
           </motion.div>
@@ -123,14 +133,14 @@ export default function Settings() {
           >
             <h2 className="text-lg font-semibold text-foreground flex items-center gap-2 mb-4">
               <Bell className="w-5 h-5 text-primary" />
-              Notifications
+              {t("settings.notifications.title")}
             </h2>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-foreground">Push Notifications</p>
+                  <p className="font-medium text-foreground">{t("settings.notifications.pushTitle")}</p>
                   <p className="text-sm text-muted-foreground">
-                    Receive alerts for new jobs and course updates
+                    {t("settings.notifications.pushDesc")}
                   </p>
                 </div>
                 <Switch
@@ -142,9 +152,9 @@ export default function Settings() {
               </div>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-foreground">Email Updates</p>
+                  <p className="font-medium text-foreground">{t("settings.notifications.emailTitle")}</p>
                   <p className="text-sm text-muted-foreground">
-                    Weekly progress reports and job recommendations
+                    {t("settings.notifications.emailDesc")}
                   </p>
                 </div>
                 <Switch
@@ -166,23 +176,23 @@ export default function Settings() {
           >
             <h2 className="text-lg font-semibold text-foreground flex items-center gap-2 mb-4">
               <Lock className="w-5 h-5 text-primary" />
-              Change Password
+              {t("settings.password.title")}
             </h2>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="current">Current Password</Label>
+                <Label htmlFor="current">{t("settings.password.current")}</Label>
                 <Input id="current" type="password" placeholder="••••••••" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="new">New Password</Label>
+                <Label htmlFor="new">{t("settings.password.new")}</Label>
                 <Input id="new" type="password" placeholder="••••••••" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirm">Confirm New Password</Label>
+                <Label htmlFor="confirm">{t("settings.password.confirm")}</Label>
                 <Input id="confirm" type="password" placeholder="••••••••" />
               </div>
               <Button variant="outline" className="w-full">
-                Update Password
+                {t("settings.password.updateButton")}
               </Button>
             </div>
           </motion.div>
@@ -196,19 +206,18 @@ export default function Settings() {
           >
             <h2 className="text-lg font-semibold text-foreground flex items-center gap-2 mb-4">
               <Shield className="w-5 h-5 text-primary" />
-              Privacy & Data
+              {t("settings.privacy.title")}
             </h2>
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Your data is encrypted and securely stored. We never share your
-                personal information with third parties without your consent.
+                {t("settings.privacy.desc")}
               </p>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm">
-                  Download My Data
+                  {t("settings.privacy.download")}
                 </Button>
                 <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
-                  Delete Account
+                  {t("settings.privacy.delete")}
                 </Button>
               </div>
             </div>
@@ -222,7 +231,7 @@ export default function Settings() {
             className="flex flex-col sm:flex-row gap-4"
           >
             <Button onClick={handleSave} className="flex-1">
-              Save Changes
+              {t("settings.saveChanges")}
             </Button>
             <Button
               variant="outline"
@@ -230,7 +239,7 @@ export default function Settings() {
               className="flex-1 gap-2"
             >
               <LogOut className="w-4 h-4" />
-              Log Out
+              {t("settings.logout")}
             </Button>
           </motion.div>
         </div>

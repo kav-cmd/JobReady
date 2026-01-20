@@ -3,7 +3,7 @@
  * Handles all API calls for video completion tracking
  */
 
-const API_BASE = "http://localhost:5000/api/progress";
+const API_BASE = "http://localhost:5001/api/progress";
 
 // Get auth token from localStorage
 const getAuthToken = () => {

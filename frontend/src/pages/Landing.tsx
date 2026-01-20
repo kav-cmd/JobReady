@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import {
   GraduationCap,
   Target,
@@ -12,44 +13,49 @@ import {
   BookOpen,
 } from "lucide-react";
 
-const features = [
-  {
-    icon: GraduationCap,
-    title: "Skill Assessment",
-    description: "Take our quick quiz to discover your strengths and areas for growth",
-  },
-  {
-    icon: BookOpen,
-    title: "Vocational Learning",
-    description: "Access curated courses in high-demand skills like IT, healthcare, and trades",
-  },
-  {
-    icon: Target,
-    title: "Smart Job Matching",
-    description: "Get matched with jobs that fit your skills and career goals",
-  },
-  {
-    icon: Award,
-    title: "Resume Builder",
-    description: "Create a professional resume that highlights your competencies",
-  },
-];
-
-const stats = [
-  { value: "50K+", label: "Students Trained" },
-  { value: "200+", label: "Skill Courses" },
-  { value: "5000+", label: "Job Placements" },
-  { value: "95%", label: "Success Rate" },
-];
-
-const languages = [
-  { code: "en", label: "English" },
-  { code: "hi", label: "हिन्दी" },
-  { code: "ta", label: "தமிழ்" },
-  { code: "te", label: "తెలుగు" },
-];
-
 export default function Landing() {
+  const { t, i18n } = useTranslation();
+
+  const features = [
+    {
+      icon: GraduationCap,
+      title: t("landing.features.assessment.title"),
+      description: t("landing.features.assessment.desc"),
+    },
+    {
+      icon: BookOpen,
+      title: t("landing.features.vocational.title"),
+      description: t("landing.features.vocational.desc"),
+    },
+    {
+      icon: Target,
+      title: t("landing.features.matching.title"),
+      description: t("landing.features.matching.desc"),
+    },
+    {
+      icon: Award,
+      title: t("landing.features.resume.title"),
+      description: t("landing.features.resume.desc"),
+    },
+  ];
+
+  const stats = [
+    { value: "50K+", label: t("landing.stats.students") },
+    { value: "200+", label: t("landing.stats.courses") },
+    { value: "5000+", label: t("landing.stats.placements") },
+    { value: "95%", label: t("landing.stats.successRate") },
+  ];
+
+  const languages = [
+    { code: "en", label: "English" },
+    { code: "hi", label: "हिन्दी" },
+    { code: "kn", label: "ಕನ್ನಡ" },
+  ];
+
+  const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    i18n.changeLanguage(e.target.value);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -63,7 +69,11 @@ export default function Landing() {
           </Link>
 
           <div className="flex items-center gap-3">
-            <select className="text-sm bg-transparent border border-border rounded-lg px-2 py-1.5 text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring">
+            <select
+              value={i18n.language}
+              onChange={handleLanguageChange}
+              className="text-sm bg-transparent border border-border rounded-lg px-2 py-1.5 text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            >
               {languages.map((lang) => (
                 <option key={lang.code} value={lang.code}>
                   {lang.label}
@@ -72,11 +82,11 @@ export default function Landing() {
             </select>
             <Link to="/login">
               <Button variant="ghost" size="sm">
-                Login
+                {t("common.login")}
               </Button>
             </Link>
             <Link to="/signup">
-              <Button size="sm">Sign Up</Button>
+              <Button size="sm">{t("common.signup")}</Button>
             </Link>
           </div>
         </div>
@@ -93,15 +103,14 @@ export default function Landing() {
             >
               <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent text-accent-foreground text-sm font-medium mb-6">
                 <Globe className="w-4 h-4" />
-                Available in 10+ Indian Languages
+                {t("landing.availableIn")}
               </span>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight">
-                Learn Skills.{" "}
-                <span className="text-primary">Get Jobs.</span>
+                {t("landing.heroTitle")}{" "}
+                <span className="text-primary">{t("landing.heroSubtitle")}</span>
               </h1>
               <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-                Your AI-powered vocational assistant. Discover your strengths, 
-                learn in-demand skills, and get matched with the perfect job opportunities.
+                {t("landing.heroDescription")}
               </p>
             </motion.div>
 
@@ -113,13 +122,13 @@ export default function Landing() {
             >
               <Link to="/signup">
                 <Button variant="hero" size="xl" className="gap-2">
-                  Get Started Free
+                  {t("common.getStarted")}
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </Link>
               <Link to="/login">
                 <Button variant="hero-outline" size="lg">
-                  I already have an account
+                  {t("common.alreadyHaveAccount")}
                 </Button>
               </Link>
             </motion.div>
@@ -132,11 +141,11 @@ export default function Landing() {
             >
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-success" />
-                <span>100% Free to Start</span>
+                <span>{t("common.freeToStart")}</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-success" />
-                <span>No Credit Card Required</span>
+                <span>{t("common.noCreditCard")}</span>
               </div>
             </motion.div>
           </div>
@@ -168,10 +177,10 @@ export default function Landing() {
         <div className="container">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-foreground">
-              Your Path to Employment
+              {t("landing.features.title")}
             </h2>
             <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-              A complete ecosystem designed to take you from learning to earning
+              {t("landing.features.subtitle")}
             </p>
           </div>
 
@@ -200,18 +209,18 @@ export default function Landing() {
         <div className="container">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-foreground">
-              How It Works
+              {t("landing.howItWorks.title")}
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
-              Three simple steps to transform your career
+              {t("landing.howItWorks.subtitle")}
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             {[
-              { step: 1, title: "Take Assessment", desc: "Complete a quick skill assessment to identify your strengths" },
-              { step: 2, title: "Learn & Grow", desc: "Access personalized learning paths in your chosen field" },
-              { step: 3, title: "Get Matched", desc: "Apply to jobs that match your new skills and interests" },
+              { step: 1, title: t("landing.howItWorks.step1.title"), desc: t("landing.howItWorks.step1.desc") },
+              { step: 2, title: t("landing.howItWorks.step2.title"), desc: t("landing.howItWorks.step2.desc") },
+              { step: 3, title: t("landing.howItWorks.step3.title"), desc: t("landing.howItWorks.step3.desc") },
             ].map((item, index) => (
               <motion.div
                 key={item.step}
@@ -237,14 +246,14 @@ export default function Landing() {
           <div className="max-w-2xl mx-auto text-center">
             <Users className="w-12 h-12 text-primary mx-auto mb-6" />
             <h2 className="text-3xl md:text-4xl font-bold text-foreground">
-              Ready to Start Your Journey?
+              {t("landing.readyToStart.title")}
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
-              Join thousands of students who have transformed their careers with JobReady
+              {t("landing.readyToStart.desc")}
             </p>
             <Link to="/signup">
               <Button variant="hero" size="xl" className="mt-8 gap-2">
-                Create Free Account
+                {t("landing.readyToStart.createAccount")}
                 <ArrowRight className="w-5 h-5" />
               </Button>
             </Link>
@@ -263,7 +272,7 @@ export default function Landing() {
               <span className="font-medium text-foreground">JobReady</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              © 2025 JobReady Vocational Assistant. All rights reserved.
+              {t("common.allRightsReserved")}
             </p>
           </div>
         </div>
