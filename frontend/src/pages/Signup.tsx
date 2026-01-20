@@ -115,9 +115,9 @@ export default function Signup() {
         throw new Error(data.message || t("signup.verifyFailed"));
       }
 
-      // Save token to localStorage
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
+      // Save token using centralized auth utility
+      const { saveAuthData } = await import("@/lib/auth");
+      saveAuthData(data.token, data.user);
 
       toast({
         title: t("signup.success"),

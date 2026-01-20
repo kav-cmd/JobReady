@@ -17,7 +17,7 @@ class MockDatabase {
     }
 
     async findUserById(id) {
-        return this.users.find(u => u._id === id) || null;
+        return this.users.find(u => u._id === id || u.id === id) || null;
     }
 
     async saveUser(userData) {
@@ -25,15 +25,33 @@ class MockDatabase {
 
         if (existingIndex >= 0) {
             this.users[existingIndex] = { ...this.users[existingIndex], ...userData };
+            // Ensure comparePassword method exists
+            if (!this.users[existingIndex].comparePassword) {
+                this.users[existingIndex].comparePassword = async function (candidatePassword) {
+                    // If password is hashed (starts with $2b$), use bcrypt
+                    if (this.password && this.password.startsWith('$2b$')) {
+                        const bcrypt = require('bcrypt');
+                        return await bcrypt.compare(candidatePassword, this.password);
+                    }
+                    // Otherwise, direct comparison (for testing)
+                    return candidatePassword === this.password;
+                };
+            }
             return this.users[existingIndex];
         } else {
             const newUser = {
                 _id: `mock_id_${Math.random().toString(36).substr(2, 9)}`,
+                id: `mock_id_${Math.random().toString(36).substr(2, 9)}`, // Include both _id and id
                 ...userData,
                 createdAt: new Date(),
                 updatedAt: new Date(),
                 comparePassword: async function (candidatePassword) {
-                    // Simplified for mock: just direct comparison
+                    // If password is hashed (starts with $2b$), use bcrypt
+                    if (this.password && this.password.startsWith('$2b$')) {
+                        const bcrypt = require('bcrypt');
+                        return await bcrypt.compare(candidatePassword, this.password);
+                    }
+                    // Otherwise, direct comparison (for testing)
                     return candidatePassword === this.password;
                 }
             };

@@ -83,17 +83,54 @@ export default function ProfileSetup() {
     }));
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step < totalSteps) {
       setStep(step + 1);
     } else {
-      toast({
-        title: "Profile Complete!",
-        description: "Let's assess your skills now.",
-      });
-      setTimeout(() => {
-        navigate("/assessment");
-      }, 1000);
+      // Save profile data to backend
+      try {
+        const { getAuthHeaders, isAuthenticated } = await import("@/lib/auth");
+        if (!isAuthenticated()) {
+          toast({
+            title: "Error",
+            description: "Please log in to save your profile",
+            variant: "destructive",
+          });
+          navigate("/login");
+          return;
+        }
+
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5001/api";
+        const headers = getAuthHeaders();
+        
+        // Save profile preferences (can be extended to save to backend)
+        const profileData = {
+          language: formData.language,
+          state: formData.state,
+          education: formData.education,
+          interests: formData.interests,
+        };
+        
+        // Store in localStorage for now (can be saved to backend later)
+        localStorage.setItem("userProfile", JSON.stringify(profileData));
+
+        toast({
+          title: "Profile Complete!",
+          description: "Let's assess your skills now.",
+        });
+        setTimeout(() => {
+          navigate("/assessment");
+        }, 1000);
+      } catch (error) {
+        console.error("[ProfileSetup] Error saving profile:", error);
+        toast({
+          title: "Profile Saved",
+          description: "Let's assess your skills now.",
+        });
+        setTimeout(() => {
+          navigate("/assessment");
+        }, 1000);
+      }
     }
   };
 

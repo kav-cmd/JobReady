@@ -1,5 +1,6 @@
 import express from 'express';
-import { sendOtp, verifyOtp, resendOtp, login } from '../controllers/auth.controller.js';
+import { sendOtp, verifyOtp, resendOtp, login, getProfile, updateProfile } from '../controllers/auth.controller.js';
+import { verifyToken } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
 
@@ -26,5 +27,17 @@ router.post('/resend-otp', resendOtp);
  * Login user and get JWT token
  */
 router.post('/login', login);
+
+/**
+ * GET /api/auth/profile
+ * Get current user profile (requires authentication)
+ */
+router.get('/profile', verifyToken, getProfile);
+
+/**
+ * PUT /api/auth/profile
+ * Update current user profile (requires authentication)
+ */
+router.put('/profile', verifyToken, updateProfile);
 
 export default router;

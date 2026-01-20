@@ -131,6 +131,13 @@ export function VideoCompletionCheckbox({
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    // Check if user is authenticated first
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.warn("[VideoCompletionCheckbox] No token found - user not authenticated");
+      return;
+    }
+
     const checkVideoStatus = async () => {
       try {
         const response = await getVideoStatus(courseId, videoId);
@@ -148,9 +155,26 @@ export function VideoCompletionCheckbox({
   const handleToggle = async () => {
     if (isCompleted) return; // Don't allow unchecking
 
+    // Check authentication first
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to mark videos as completed. Redirecting to login page...",
+        variant: "destructive",
+      });
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 2000);
+      return;
+    }
+
     try {
       setIsLoading(true);
+      console.log('[VideoCompletionCheckbox] Marking video as completed:', { courseId, videoId, hasToken: !!token });
+      
       const response = await markVideoCompleted(courseId, videoId);
+      console.log('[VideoCompletionCheckbox] Response:', response);
 
       if (response.success) {
         setIsCompleted(true);
@@ -158,12 +182,30 @@ export function VideoCompletionCheckbox({
           title: "Perfect! ✓",
           description: "Video marked as completed.",
         });
+        console.log('[VideoCompletionCheckbox] Calling onCompleted callback');
         onCompleted?.();
+      } else {
+        console.warn('[VideoCompletionCheckbox] Response not successful:', response);
+        toast({
+          title: "Warning",
+          description: response.message || "Video may already be completed.",
+          variant: "default",
+        });
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('[VideoCompletionCheckbox] Error:', error);
+      
+      let errorMessage = "Failed to mark video as completed.";
+      
+      if (error?.message?.includes("401") || error?.message?.includes("Unauthorized") || error?.message?.includes("No token")) {
+        errorMessage = "You need to log in again. Please refresh the page and log in.";
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to mark video as completed.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

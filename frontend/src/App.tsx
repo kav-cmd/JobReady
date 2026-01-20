@@ -7,6 +7,7 @@ import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ProfileSetup from "./pages/ProfileSetup";
+import Profile from "./pages/Profile";
 import Assessment from "./pages/Assessment";
 import Dashboard from "./pages/Dashboard";
 import Learning from "./pages/Learning";
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/profile-setup" element={<ProfileSetup />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/assessment" element={<Assessment />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/learning" element={<Learning />} />

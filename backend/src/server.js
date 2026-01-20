@@ -6,8 +6,35 @@ import authRoutes from './routes/auth.routes.js';
 import aiRoutes from './routes/ai.routes.js';
 import courseRoutes from './routes/course.routes.js';
 import videoProgressRoutes from './routes/videoProgress.routes.js';
+import { isLlamaConfigured } from './services/llama.service.js';
 
 dotenv.config();
+
+// Fail loudly if Groq API key is missing
+const checkGroqConfig = () => {
+  const apiKey = process.env.LLAMA_API_KEY;
+  const apiUrl = process.env.LLAMA_API_URL;
+  const model = process.env.LLAMA_MODEL;
+  
+  if (!apiKey || !apiUrl || !model) {
+    console.error('❌ [SERVER] Groq API configuration is missing!');
+    console.error('   Required environment variables:');
+    console.error('   - LLAMA_API_KEY');
+    console.error('   - LLAMA_API_URL');
+    console.error('   - LLAMA_MODEL');
+    console.error('   Please set these in your .env file and restart the server.');
+    process.exit(1);
+  }
+  
+  if (!isLlamaConfigured()) {
+    console.error('❌ [SERVER] Groq API configuration is invalid!');
+    process.exit(1);
+  }
+  
+  console.log('✅ [SERVER] Groq API configuration validated');
+};
+
+checkGroqConfig();
 
 const app = express();
 

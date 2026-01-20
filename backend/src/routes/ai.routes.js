@@ -4,7 +4,8 @@ import {
   healthCheck,
   generateQuiz,
   generateNotes,
-  resolveDoubt
+  resolveDoubt,
+  youtubeSummary
 } from '../controllers/ai.controller.js';
 
 const router = express.Router();
@@ -59,6 +60,22 @@ router.post('/notes', generateNotes);
  * }
  */
 router.post('/doubt', resolveDoubt);
+
+/**
+ * POST /api/ai/summarize
+ * POST /api/ai/youtube-summary
+ * Generate AI summary for YouTube video
+ * 
+ * Request body:
+ * {
+ *   "youtubeUrl": "https://youtube.com/watch?v=...",
+ *   "youtubeId": "video_id",  // Alternative to youtubeUrl
+ *   "title": "Video Title",    // Optional
+ *   "language": "en"           // Optional: en, hi, kn, hinglish
+ * }
+ */
+router.post('/summarize', youtubeSummary);
+router.post('/youtube-summary', youtubeSummary);
 
 /**
  * GET /api/ai/health

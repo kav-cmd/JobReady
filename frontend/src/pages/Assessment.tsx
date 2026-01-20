@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Briefcase, ArrowRight, ArrowLeft, CheckCircle } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Briefcase, ArrowRight, ArrowLeft, CheckCircle, Globe } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
 const questions = [
@@ -90,11 +92,21 @@ const questions = [
 ];
 
 export default function Assessment() {
+  const { t } = useTranslation();
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string | number>>({});
+  const [language, setLanguage] = useState<"en" | "hi" | "kn" | "hinglish">("en");
   const [isComplete, setIsComplete] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Language options
+  const languages = [
+    { code: "en" as const, label: "English", flag: "🇬🇧" },
+    { code: "hi" as const, label: "हिंदी (Hindi)", flag: "🇮🇳" },
+    { code: "kn" as const, label: "ಕನ್ನಡ (Kannada)", flag: "🇮🇳" },
+    { code: "hinglish" as const, label: "Hinglish", flag: "🌐" }
+  ];
 
   const progress = ((currentQuestion + 1) / questions.length) * 100;
 
@@ -121,7 +133,75 @@ export default function Assessment() {
   };
 
   const handleContinue = () => {
+    // Store assessment results with language preference
+    const assessmentData = {
+      answers,
+      language,
+      completedAt: new Date().toISOString(),
+    };
+    
+    // Store in localStorage for course recommendations
+    localStorage.setItem("assessmentResults", JSON.stringify(assessmentData));
+    
     navigate("/dashboard");
+  };
+
+  // Course recommendation logic based on answers and language
+  const getRecommendedCourses = () => {
+    const courses = [
+      t("learning.microsoft.title"), // "Microsoft Skills"
+      t("learning.email.title"), // "Email Communication Skills"
+      "English Speaking and Customer Service",
+      "Data Entry & Accuracy",
+      "Basic Computer Skills",
+      "Workplace Safety & Ethics",
+      "Interview Preparation (RV Students)",
+    ];
+
+    const recommendations: string[] = [];
+    
+    // Computer skills assessment (Q1)
+    const computerSkill = answers[1] as number;
+    if (computerSkill <= 2) {
+      recommendations.push("Basic Computer Skills");
+      recommendations.push(t("learning.microsoft.title")); // "Microsoft Skills"
+    } else {
+      recommendations.push(t("learning.microsoft.title")); // "Microsoft Skills"
+      recommendations.push("Data Entry & Accuracy");
+    }
+
+    // Communication skills (Q2)
+    const communicationSkill = answers[2] as number;
+    if (communicationSkill <= 2) {
+      recommendations.push("English Speaking and Customer Service");
+      recommendations.push(t("learning.email.title")); // "Email Communication Skills"
+    } else {
+      recommendations.push(t("learning.email.title")); // "Email Communication Skills"
+    }
+
+    // English proficiency (Q6) - prioritize English course if low skill OR non-English language selected
+    const englishSkill = answers[6] as number;
+    if (englishSkill <= 2 || language !== "en") {
+      recommendations.push("English Speaking and Customer Service");
+    }
+
+    // Problem solving (Q5)
+    const problemSolving = answers[5] as number;
+    if (problemSolving >= 3) {
+      recommendations.push("Data Entry & Accuracy");
+    }
+
+    // Work environment preference (Q4)
+    const workEnv = answers[4] as string;
+    if (workEnv === "dynamic" || workEnv === "large") {
+      recommendations.push("Workplace Safety & Ethics");
+    }
+
+    // Always include interview prep for RV students
+    recommendations.push("Interview Preparation (RV Students)");
+
+    // Remove duplicates and return unique recommendations
+    return Array.from(new Set(recommendations));
   };
 
   const currentAnswer = answers[questions[currentQuestion]?.id];
@@ -140,10 +220,32 @@ export default function Assessment() {
           <h1 className="text-3xl font-bold text-foreground mb-4">
             Assessment Complete!
           </h1>
-          <p className="text-muted-foreground mb-8">
-            Based on your responses, we've created a personalized learning path 
-            and job recommendations just for you.
+          <p className="text-muted-foreground mb-6">
+            Based on your responses{language !== "en" && ` and language preference (${languages.find(l => l.code === language)?.label})`}, we've created a personalized learning path 
+            and course recommendations just for you.
           </p>
+          
+          {/* Recommended Courses */}
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold text-foreground mb-4">Recommended Courses</h2>
+            <div className="space-y-2">
+              {getRecommendedCourses().map((course, index) => (
+                <motion.div
+                  key={course}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="p-3 rounded-lg bg-card border border-border flex items-center gap-3"
+                >
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span className="text-sm font-bold text-primary">{index + 1}</span>
+                  </div>
+                  <span className="text-sm font-medium text-foreground">{course}</span>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
           <div className="grid grid-cols-3 gap-4 mb-8">
             <div className="p-4 rounded-xl bg-card border border-border">
               <div className="text-2xl font-bold text-primary">75%</div>
@@ -171,16 +273,33 @@ export default function Assessment() {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="border-b border-border bg-card">
-        <div className="container flex items-center justify-between h-16">
+        <div className="container flex items-center justify-between h-16 px-4">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
               <Briefcase className="w-4 h-4 text-primary-foreground" />
             </div>
             <span className="font-semibold text-lg text-foreground">Skill Assessment</span>
           </div>
-          <span className="text-sm text-muted-foreground">
-            {currentQuestion + 1} of {questions.length}
-          </span>
+          <div className="flex items-center gap-4">
+            {/* Language Selector */}
+            <div className="flex items-center gap-2">
+              <Globe className="w-4 h-4 text-muted-foreground" />
+              <select
+                value={language}
+                onChange={(e) => setLanguage(e.target.value as "en" | "hi" | "kn" | "hinglish")}
+                className="px-2 py-1 rounded-md border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                {languages.map((lang) => (
+                  <option key={lang.code} value={lang.code}>
+                    {lang.flag} {lang.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <span className="text-sm text-muted-foreground">
+              {currentQuestion + 1} of {questions.length}
+            </span>
+          </div>
         </div>
       </header>
 

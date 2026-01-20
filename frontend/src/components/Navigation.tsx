@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Home,
   BookOpen,
@@ -11,14 +11,19 @@ import {
   X,
   Zap,
   Globe,
+  LogOut,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { useTranslation } from "react-i18next";
+import { clearAuthData, getCurrentUser } from "@/lib/auth";
+import { useToast } from "@/hooks/use-toast";
 
 export function Navigation() {
   const { t, i18n } = useTranslation();
   const location = useLocation();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userName, setUserName] = useState("User");
 
@@ -38,21 +43,25 @@ export function Navigation() {
 
   useEffect(() => {
     // Get user data from localStorage
-    const userDataString = localStorage.getItem("user");
-    if (userDataString) {
-      try {
-        const userData = JSON.parse(userDataString);
-        if (userData.name) {
-          setUserName(userData.name);
-        }
-      } catch (error) {
-        console.error("Error parsing user data:", error);
-      }
+    const user = getCurrentUser();
+    if (user && user.name) {
+      setUserName(user.name);
     }
-  }, []);
+  }, [location.pathname]); // Update when route changes
 
   const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     i18n.changeLanguage(e.target.value);
+  };
+
+  const handleLogout = () => {
+    clearAuthData();
+    toast({
+      title: t("settings.logoutTitle") || "Logged Out",
+      description: t("settings.logoutDesc") || "You have been logged out successfully",
+    });
+    setTimeout(() => {
+      navigate("/");
+    }, 500);
   };
 
   return (
@@ -108,7 +117,7 @@ export function Navigation() {
           </select>
         </div>
 
-        <div className="p-4 border-t border-border">
+        <div className="p-4 border-t border-border space-y-2">
           <Link
             to="/profile"
             className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent transition-colors"
@@ -118,9 +127,21 @@ export function Navigation() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-foreground truncate">{userName}</p>
-              <p className="text-xs text-muted-foreground truncate">{t("nav.viewProfile")}</p>
+              <p className="text-xs text-muted-foreground truncate">{t("nav.viewProfile") || "View Profile"}</p>
             </div>
           </Link>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-destructive/10 hover:text-destructive transition-colors text-left"
+          >
+            <div className="w-8 h-8 rounded-full bg-destructive/10 flex items-center justify-center">
+              <LogOut className="w-4 h-4 text-destructive" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">{t("settings.logout") || "Log Out"}</p>
+              <p className="text-xs text-muted-foreground truncate">Sign out of your account</p>
+            </div>
+          </button>
         </div>
       </nav>
 
@@ -188,6 +209,28 @@ export function Navigation() {
               </Link>
             </li>
           ))}
+          <li>
+            <Link
+              to="/profile"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+            >
+              <User className="w-5 h-5" />
+              {t("nav.viewProfile") || "Profile"}
+            </Link>
+          </li>
+          <li>
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                handleLogout();
+              }}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-destructive hover:bg-destructive/10"
+            >
+              <LogOut className="w-5 h-5" />
+              {t("settings.logout") || "Log Out"}
+            </button>
+          </li>
         </ul>
       </div>
     </>

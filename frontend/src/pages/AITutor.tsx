@@ -25,33 +25,42 @@ interface AIResponse {
   metadata?: {
     courseName: string;
     topic: string;
+    language?: string;
     generatedAt: string;
   };
   message?: string;
 }
 
+// Course options matching Learning page modules
 const vocationalCourses = [
-  "Data Entry Specialist",
-  "Customer Service Representative",
-  "Office Assistant",
-  "Retail Sales Associate",
-  "Bank Teller",
-  "Receptionist",
-  "Accounting Assistant",
-  "Medical Assistant",
-  "IT Support Specialist",
+  "Microsoft Skills",
+  "Email Communication Skills",
+  "English Speaking and Customer Service",
+  "Data Entry & Accuracy",
+  "Basic Computer Skills",
+  "Workplace Safety & Ethics",
+  "Interview Preparation (RV Students)",
 ];
 
 export default function AITutor() {
   const [mode, setMode] = useState<"quiz" | "notes" | "doubt">("quiz");
-  const [courseName, setCourseName] = useState("Data Entry Specialist");
+  const [courseName, setCourseName] = useState("Microsoft Skills");
   const [topic, setTopic] = useState("Keyboard Shortcuts");
   const [userQuery, setUserQuery] = useState("");
+  const [language, setLanguage] = useState<"en" | "hi" | "kn" | "hinglish">("en");
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState<AIResponse | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Language options
+  const languages = [
+    { code: "en" as const, label: "English", flag: "🇬🇧" },
+    { code: "hi" as const, label: "हिंदी (Hindi)", flag: "🇮🇳" },
+    { code: "kn" as const, label: "ಕನ್ನಡ (Kannada)", flag: "🇮🇳" },
+    { code: "hinglish" as const, label: "Hinglish", flag: "🌐" }
+  ];
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -89,6 +98,7 @@ export default function AITutor() {
       const requestBody: any = {
         courseName,
         topic,
+        language, // Include language in all requests
       };
 
       if (mode === "doubt") {
@@ -313,6 +323,25 @@ export default function AITutor() {
                 />
               </div>
 
+              {/* Language Selection */}
+              <div>
+                <Label htmlFor="language" className="text-sm font-semibold mb-2 block">
+                  Language
+                </Label>
+                <select
+                  id="language"
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value as "en" | "hi" | "kn" | "hinglish")}
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  {languages.map((lang) => (
+                    <option key={lang.code} value={lang.code}>
+                      {lang.flag} {lang.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/* User Query (for doubt mode) */}
               {mode === "doubt" && (
                 <div>
@@ -355,6 +384,12 @@ export default function AITutor() {
                   <p className="text-muted-foreground">
                     <span className="font-medium text-foreground">{response.metadata?.courseName}</span> •{" "}
                     <span className="font-medium text-foreground">{response.metadata?.topic}</span>
+                    {response.metadata?.language && (
+                      <> • <span className="text-xs font-medium text-foreground">
+                        {languages.find(l => l.code === response.metadata?.language)?.flag}{" "}
+                        {languages.find(l => l.code === response.metadata?.language)?.label}
+                      </span></>
+                    )}
                   </p>
                 </div>
 

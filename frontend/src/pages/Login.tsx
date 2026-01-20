@@ -7,6 +7,7 @@ import { Briefcase, Mail, Lock, Phone, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { saveAuthData } from "@/lib/auth";
 
 export default function Login() {
   const { t } = useTranslation();
@@ -19,15 +20,70 @@ export default function Login() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [loading, setLoading] = useState(false);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5001/api";
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: t("login.welcomeTitle"),
-      description: t("login.loggingIn"),
-    });
-    setTimeout(() => {
-      navigate("/dashboard");
-    }, 1000);
+    setLoading(true);
+
+    try {
+      const loginData = loginMethod === "email" 
+        ? { email: formData.email, password: formData.password }
+        : { phone: formData.phone, password: formData.password };
+
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(loginData),
+      });
+
+      const data = await response.json();
+      console.log('[Login] Response received:', { success: data.success, hasToken: !!data.token, hasUser: !!data.user });
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Login failed");
+      }
+
+      // Validate response has required data
+      if (!data.token) {
+        console.error('[Login] No token in response:', data);
+        throw new Error("Login response missing token");
+      }
+
+      if (!data.user) {
+        console.error('[Login] No user data in response:', data);
+        throw new Error("Login response missing user data");
+      }
+
+      // Save token and user data using centralized auth utility
+      try {
+        saveAuthData(data.token, data.user);
+      } catch (storageError) {
+        console.error('[Login] Storage error:', storageError);
+        throw new Error("Failed to save authentication data");
+      }
+
+      toast({
+        title: t("login.welcomeTitle"),
+        description: data.message || "Login successful",
+      });
+
+      // Small delay to ensure localStorage is written
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 500);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Login failed. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -156,8 +212,8 @@ export default function Login() {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full" size="lg">
-                {t("login.signInButton")}
+              <Button type="submit" className="w-full" size="lg" disabled={loading}>
+                {loading ? "Logging in..." : t("login.signInButton")}
               </Button>
             </form>
 

@@ -220,11 +220,14 @@ export const verifyOtp = async (req, res) => {
       await mockDb.saveUser(user);
     }
 
+    // Get user ID (handle both MongoDB ObjectId and string IDs)
+    const userId = user._id ? user._id.toString() : (user.id || user._id);
+    
     // Generate JWT token
     const token = jwt.sign(
       {
-        id: user._id || user.id,
-        role: user.role
+        id: userId,
+        role: user.role || 'student'
       },
       process.env.JWT_SECRET || 'your-secret-key',
       {
@@ -232,14 +235,17 @@ export const verifyOtp = async (req, res) => {
       }
     );
 
-    // Prepare response
+    // Prepare response - ensure all IDs are strings
     const userResponse = {
-      id: user._id,
+      id: userId,
+      _id: userId, // Include both for compatibility
       name: user.name,
       email: user.email,
       phone: user.phone,
-      role: user.role
+      role: user.role || 'student'
     };
+
+    console.log('[Auth Controller] OTP verified, sending response with token');
 
     res.status(200).json({
       success: true,
@@ -318,10 +324,13 @@ export const resendOtp = async (req, res) => {
 // Login Controller
 export const login = async (req, res) => {
   try {
+    console.log('[Auth Controller] Login attempt:', { body: req.body });
+    
     // Validate request body
     const { error, value } = loginSchema.validate(req.body);
 
     if (error) {
+      console.error('[Auth Controller] Validation error:', error.details[0].message);
       return res.status(400).json({
         success: false,
         message: error.details[0].message
@@ -334,11 +343,20 @@ export const login = async (req, res) => {
     let user;
     if (isDbConnected()) {
       user = await User.findOne({ email, isVerified: true });
+      console.log('[Auth Controller] MongoDB user found:', user ? 'Yes' : 'No');
     } else {
       user = await mockDb.findUserByEmail(email);
+      console.log('[Auth Controller] Mock DB user found:', user ? 'Yes' : 'No');
+      
+      // For mock DB, also check isVerified
+      if (user && !user.isVerified) {
+        console.log('[Auth Controller] User not verified in mock DB');
+        user = null;
+      }
     }
 
     if (!user) {
+      console.log('[Auth Controller] User not found or not verified');
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password'
@@ -347,19 +365,32 @@ export const login = async (req, res) => {
 
     // Compare password
     const isPasswordMatch = await user.comparePassword(password);
+    console.log('[Auth Controller] Password match:', isPasswordMatch);
 
     if (!isPasswordMatch) {
+      console.log('[Auth Controller] Password mismatch');
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password'
       });
     }
 
+    // Get user ID (handle both MongoDB ObjectId and string IDs)
+    const userId = user._id ? user._id.toString() : (user.id || user._id);
+    
+    if (!userId) {
+      console.error('[Auth Controller] No user ID found');
+      return res.status(500).json({
+        success: false,
+        message: 'User ID not found'
+      });
+    }
+
     // Generate JWT token
     const token = jwt.sign(
       {
-        id: user._id || user.id,
-        role: user.role
+        id: userId,
+        role: user.role || 'student'
       },
       process.env.JWT_SECRET || 'your-secret-key',
       {
@@ -367,15 +398,20 @@ export const login = async (req, res) => {
       }
     );
 
-    // Prepare response
+    console.log('[Auth Controller] Token generated successfully for user:', userId);
+
+    // Prepare response - ensure all IDs are strings
     const userResponse = {
-      id: user._id,
+      id: userId,
+      _id: userId, // Include both for compatibility
       name: user.name,
       email: user.email,
       phone: user.phone,
-      role: user.role
+      role: user.role || 'student'
     };
 
+    console.log('[Auth Controller] Login successful, sending response');
+    
     res.status(200).json({
       success: true,
       message: 'Login successful',
@@ -383,10 +419,171 @@ export const login = async (req, res) => {
       user: userResponse
     });
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('[Auth Controller] Login error:', error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+/**
+ * Get current user profile
+ */
+export const getProfile = async (req, res) => {
+  try {
+    const userId = req.user?._id || req.user?.id;
+    
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not authenticated'
+      });
+    }
+
+    console.log('[Auth Controller] Fetching profile for user:', userId);
+
+    let user;
+    if (isDbConnected()) {
+      user = await User.findById(userId).select('-password -otp -otpExpires');
+    } else {
+      user = await mockDb.findUserById(userId);
+      if (user) {
+        // Remove sensitive data
+        delete user.password;
+        delete user.otp;
+        delete user.otpExpires;
+      }
+    }
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Ensure ID is string
+    const userResponse = {
+      id: user._id ? user._id.toString() : (user.id || user._id),
+      _id: user._id ? user._id.toString() : (user.id || user._id),
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      role: user.role || 'student',
+      isVerified: user.isVerified || false,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt
+    };
+
+    console.log('[Auth Controller] Profile fetched successfully');
+
+    res.status(200).json({
+      success: true,
+      user: userResponse
+    });
+  } catch (error) {
+    console.error('[Auth Controller] Get profile error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch profile',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+/**
+ * Update user profile
+ */
+export const updateProfile = async (req, res) => {
+  try {
+    const userId = req.user?._id || req.user?.id;
+    
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not authenticated'
+      });
+    }
+
+    const { name, phone } = req.body;
+
+    console.log('[Auth Controller] Updating profile for user:', userId, { name, phone });
+
+    let user;
+    if (isDbConnected()) {
+      user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+      }
+
+      // Update fields
+      if (name) user.name = name;
+      if (phone) {
+        // Check if phone is already taken by another user
+        const existingPhone = await User.findOne({ phone, _id: { $ne: userId } });
+        if (existingPhone) {
+          return res.status(409).json({
+            success: false,
+            message: 'Phone number already registered'
+          });
+        }
+        user.phone = phone;
+      }
+
+      await user.save();
+    } else {
+      user = await mockDb.findUserById(userId);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+      }
+
+      if (name) user.name = name;
+      if (phone) {
+        const existingPhone = await mockDb.findUserByPhone(phone);
+        if (existingPhone && existingPhone._id !== userId && existingPhone.id !== userId) {
+          return res.status(409).json({
+            success: false,
+            message: 'Phone number already registered'
+          });
+        }
+        user.phone = phone;
+      }
+
+      await mockDb.saveUser(user);
+    }
+
+    // Prepare response
+    const userResponse = {
+      id: user._id ? user._id.toString() : (user.id || user._id),
+      _id: user._id ? user._id.toString() : (user.id || user._id),
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      role: user.role || 'student',
+      isVerified: user.isVerified || false
+    };
+
+    console.log('[Auth Controller] Profile updated successfully');
+
+    res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully',
+      user: userResponse
+    });
+  } catch (error) {
+    console.error('[Auth Controller] Update profile error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update profile',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };

@@ -1,5 +1,5 @@
 import Joi from 'joi';
-import { callGeminiAPI, validateGeminiConnection } from '../services/gemini.service.js';
+import { generateTutorContent, generateYouTubeSummary, validateAIConnection, SUPPORTED_LANGUAGES } from '../services/ai.service.js';
 
 /**
  * Validation schema for AI tutor request
@@ -24,11 +24,13 @@ const aiTutorSchema = Joi.object({
     }),
   mode: Joi.string()
     .valid('quiz', 'notes', 'doubt')
-    .required()
+    .optional()
     .messages({
-      'any.only': 'Mode must be one of: quiz, notes, doubt',
-      'any.required': 'Mode is required'
-    })
+      'any.only': 'Mode must be one of: quiz, notes, doubt'
+    }),
+  language: Joi.string()
+    .valid(...SUPPORTED_LANGUAGES)
+    .optional()
 });
 
 /**
@@ -46,20 +48,20 @@ export const aiTutor = async (req, res) => {
       });
     }
 
-    const { courseName, topic, userQuery, mode } = value;
+    const { courseName, topic, userQuery, mode = 'doubt', language = 'en' } = value;
 
-    // Call Gemini API to generate content
-    const result = await callGeminiAPI(courseName, topic, userQuery || '', mode);
+    // Call Groq API to generate content
+    const result = await generateTutorContent({ courseName, topic, userQuery: userQuery || '', mode, language });
 
     res.status(200).json(result);
   } catch (error) {
-    console.error('AI Tutor Error:', error);
+    console.error('[AI Tutor Controller] Error:', error);
 
     // Handle specific error types
-    if (error.message.includes('API key')) {
+    if (error.message.includes('API') || error.message.includes('configured')) {
       return res.status(500).json({
         success: false,
-        message: 'Gemini API is not configured. Please add GEMINI_API_KEY to environment variables.'
+        message: 'Groq API is not configured. Please set LLAMA_API_KEY, LLAMA_API_URL, and LLAMA_MODEL in your .env file.'
       });
     }
 
@@ -75,18 +77,19 @@ export const aiTutor = async (req, res) => {
  */
 export const healthCheck = async (req, res) => {
   try {
-    const result = await validateGeminiConnection();
+    const result = await validateAIConnection();
     
     if (result.success) {
       res.status(200).json({
         success: true,
         message: 'AI Tutor service is operational',
-        service: 'gemini-ai'
+        service: 'groq',
+        provider: result.provider || 'groq'
       });
     } else {
       res.status(503).json({
         success: false,
-        message: result.message
+        message: result.message || 'AI service is not configured'
       });
     }
   } catch (error) {
@@ -115,12 +118,12 @@ export const generateQuiz = async (req, res) => {
       });
     }
 
-    const { courseName, topic } = value;
-    const result = await callGeminiAPI(courseName, topic, '', 'quiz');
+    const { courseName, topic, language = 'en' } = value;
+    const result = await generateTutorContent({ courseName, topic, userQuery: '', mode: 'quiz', language });
 
     res.status(200).json(result);
   } catch (error) {
-    console.error('Generate Quiz Error:', error);
+    console.error('[Generate Quiz Controller] Error:', error);
     res.status(500).json({
       success: false,
       message: error.message || 'Failed to generate quiz'
@@ -146,12 +149,12 @@ export const generateNotes = async (req, res) => {
       });
     }
 
-    const { courseName, topic } = value;
-    const result = await callGeminiAPI(courseName, topic, '', 'notes');
+    const { courseName, topic, language = 'en' } = value;
+    const result = await generateTutorContent({ courseName, topic, userQuery: '', mode: 'notes', language });
 
     res.status(200).json(result);
   } catch (error) {
-    console.error('Generate Notes Error:', error);
+    console.error('[Generate Notes Controller] Error:', error);
     res.status(500).json({
       success: false,
       message: error.message || 'Failed to generate notes'
@@ -177,7 +180,7 @@ export const resolveDoubt = async (req, res) => {
       });
     }
 
-    const { courseName, topic, userQuery } = value;
+    const { courseName, topic, userQuery, language = 'en' } = value;
 
     if (!userQuery) {
       return res.status(400).json({
@@ -186,14 +189,56 @@ export const resolveDoubt = async (req, res) => {
       });
     }
 
-    const result = await callGeminiAPI(courseName, topic, userQuery, 'doubt');
+    const result = await generateTutorContent({ courseName, topic, userQuery, mode: 'doubt', language });
 
     res.status(200).json(result);
   } catch (error) {
-    console.error('Resolve Doubt Error:', error);
+    console.error('[Resolve Doubt Controller] Error:', error);
     res.status(500).json({
       success: false,
       message: error.message || 'Failed to resolve doubt'
+    });
+  }
+};
+
+/**
+ * YouTube Summary Controller
+ * Generate AI summaries for YouTube videos
+ */
+export const youtubeSummary = async (req, res) => {
+  try {
+    console.log('[YouTube Summary Controller] Request:', { body: req.body });
+    
+    const schema = Joi.object({
+      youtubeUrl: Joi.string().uri().optional(),
+      youtubeId: Joi.string().optional(),
+      title: Joi.string().optional(),
+      language: Joi.string().valid(...SUPPORTED_LANGUAGES).optional()
+    }).or('youtubeUrl', 'youtubeId');
+
+    const { error, value } = schema.validate(req.body);
+
+    if (error) {
+      console.warn('[YouTube Summary Controller] Validation error:', error.details[0].message);
+      return res.status(400).json({
+        success: false,
+        message: error.details[0].message,
+        error: 'VALIDATION_ERROR'
+      });
+    }
+
+    const result = await generateYouTubeSummary(value);
+    console.log('[YouTube Summary Controller] Success');
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error('[YouTube Summary Controller] Error:', {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    return res.status(500).json({
+      success: false,
+      message: error instanceof Error ? error.message : 'Failed to generate summary',
+      error: 'AI_ERROR'
     });
   }
 };
@@ -203,5 +248,6 @@ export default {
   healthCheck,
   generateQuiz,
   generateNotes,
-  resolveDoubt
+  resolveDoubt,
+  youtubeSummary
 };

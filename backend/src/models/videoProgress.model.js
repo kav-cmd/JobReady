@@ -83,6 +83,7 @@ videoProgressSchema.statics.markVideoCompleted = async function (
 };
 
 // Static method to get course progress
+// Note: This returns only initialized videos. The controller should use actual course totals.
 videoProgressSchema.statics.getCourseProgress = async function (userId, courseId) {
   try {
     const videoProgress = await this.find({
@@ -98,7 +99,7 @@ videoProgressSchema.statics.getCourseProgress = async function (userId, courseId
     return {
       courseId,
       totalVideos,
-      completedVideos,
+      completedVideos, // This is the count of completed videos
       completionPercentage,
       videos: videoProgress,
     };

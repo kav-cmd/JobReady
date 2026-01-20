@@ -60,12 +60,14 @@ export default function Settings() {
   };
 
   const handleLogout = () => {
+    // Clear all authentication data using centralized utility
+    clearAuthData();
+    
     toast({
       title: t("settings.logoutTitle"),
       description: t("settings.logoutDesc"),
     });
-    // Clear user data
-    localStorage.removeItem("user");
+    
     setTimeout(() => {
       navigate("/");
     }, 1000);

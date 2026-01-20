@@ -13,11 +13,18 @@ const isDbConnected = () => mongoose.connection.readyState === 1;
 // Mark video as completed
 export const markVideoCompleted = async (req, res) => {
   try {
+    console.log('[VideoProgress] markVideoCompleted request:', {
+      body: req.body,
+      user: req.user,
+      userId: req.user?._id || req.user?.id
+    });
+
     const { courseId, videoId } = req.body;
-    const userId = req.user._id || req.user.id; // From authenticated user
+    const userId = req.user?._id || req.user?.id; // From authenticated user
 
     // Validate input
     if (!courseId || !videoId) {
+      console.error('[VideoProgress] Missing required fields:', { courseId, videoId });
       return res.status(400).json({
         success: false,
         message: "courseId and videoId are required",
@@ -25,11 +32,14 @@ export const markVideoCompleted = async (req, res) => {
     }
 
     if (!userId) {
+      console.error('[VideoProgress] User not authenticated');
       return res.status(401).json({
         success: false,
         message: "User not authenticated",
       });
     }
+
+    console.log('[VideoProgress] Marking video as completed:', { userId, courseId, videoId, dbConnected: isDbConnected() });
 
     // Mark video as completed
     let videoProgress;
@@ -39,6 +49,7 @@ export const markVideoCompleted = async (req, res) => {
         courseId,
         videoId
       );
+      console.log('[VideoProgress] Saved to DB:', videoProgress);
     } else {
       videoProgress = await mockDb.saveProgress({
         userId,
@@ -47,6 +58,7 @@ export const markVideoCompleted = async (req, res) => {
         completed: true,
         completedAt: new Date()
       });
+      console.log('[VideoProgress] Saved to mock DB:', videoProgress);
     }
 
     return res.status(200).json({
@@ -55,13 +67,21 @@ export const markVideoCompleted = async (req, res) => {
       data: videoProgress,
     });
   } catch (error) {
-    console.error("Error marking video as completed:", error);
+    console.error("[VideoProgress] Error marking video as completed:", error);
     return res.status(500).json({
       success: false,
       message: "Error marking video as completed",
       error: error.message,
     });
   }
+};
+
+// Course video totals (should match frontend)
+const COURSE_TOTALS = {
+  "course-001": 9, // Microsoft Skills: beginner + intermediate + advanced
+  "course-002": 6, // Email Communication
+  "course-003": 34, // English Speaking (20) + Customer Service (14)
+  "course-007": 3, // Interview Preparation
 };
 
 // Get course progress (total, completed, percentage)
@@ -84,16 +104,28 @@ export const getCourseProgress = async (req, res) => {
       });
     }
 
+    // Get actual total for the course
+    const totalVideos = COURSE_TOTALS[courseId] || 0;
+
     let courseProgress;
     if (isDbConnected()) {
-      courseProgress = await VideoProgress.getCourseProgress(userId, courseId);
+      const progressData = await VideoProgress.getCourseProgress(userId, courseId);
+      // Use the actual course total, not just initialized videos
+      const completed = progressData.completedVideos || 0;
+      courseProgress = {
+        total: totalVideos,
+        completed,
+        percentage: totalVideos > 0 ? Math.round((completed / totalVideos) * 100) : 0,
+      };
     } else {
       // Mock progress calculation
-      const completed = (await mockDb.videoProgress.filter(p => p.userId === userId && p.courseId === courseId && p.completed)).length;
+      const completed = mockDb.videoProgress.filter(p => 
+        p.userId === userId && p.courseId === courseId && p.completed
+      ).length;
       courseProgress = {
-        total: 10, // Mock total
+        total: totalVideos,
         completed,
-        percentage: (completed / 10) * 100
+        percentage: totalVideos > 0 ? Math.round((completed / totalVideos) * 100) : 0,
       };
     }
 

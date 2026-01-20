@@ -3,27 +3,19 @@
  * Handles all API calls for video completion tracking
  */
 
-const API_BASE = "http://localhost:5001/api/progress";
+import { getAuthHeaders, isAuthenticated } from "./auth";
 
-// Get auth token from localStorage
-const getAuthToken = () => {
-  try {
-    const userDataString = localStorage.getItem("user");
-    if (userDataString) {
-      const userData = JSON.parse(userDataString);
-      return userData.token || null;
-    }
-  } catch (error) {
-    console.error("Error getting auth token:", error);
-  }
-  return null;
-};
+const API_BASE = import.meta.env.VITE_API_BASE_URL ? `${import.meta.env.VITE_API_BASE_URL}/progress` : "http://localhost:5001/api/progress";
 
 // Common headers with auth token
-const getHeaders = () => ({
-  "Content-Type": "application/json",
-  Authorization: `Bearer ${getAuthToken()}`,
-});
+const getHeaders = () => {
+  if (!isAuthenticated()) {
+    console.error("[VideoProgressAPI] ⚠️ User not authenticated!");
+    throw new Error("User not authenticated. Please log in.");
+  }
+  
+  return getAuthHeaders();
+};
 
 /**
  * Mark a video as completed
@@ -33,22 +25,59 @@ const getHeaders = () => ({
  */
 export async function markVideoCompleted(courseId: string, videoId: string) {
   try {
-    const response = await fetch(`${API_BASE}/video`, {
-      method: "POST",
-      headers: getHeaders(),
-      body: JSON.stringify({
-        courseId,
-        videoId,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to mark video as completed: ${response.statusText}`);
+    // Check authentication first
+    if (!isAuthenticated()) {
+      throw new Error("User not authenticated. Please log in.");
     }
 
-    return await response.json();
+    const url = `${API_BASE}/video`;
+    const headers = getHeaders();
+    const body = JSON.stringify({
+      courseId,
+      videoId,
+    });
+
+    console.log('[VideoProgressAPI] Marking video completed:', { courseId, videoId, url, hasToken: !!headers.Authorization });
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers,
+      body,
+    });
+
+    console.log('[VideoProgressAPI] Response status:', response.status, response.statusText);
+
+    if (!response.ok) {
+      let errorText = "";
+      try {
+        const errorResponse = await response.text();
+        const errorJson = JSON.parse(errorResponse);
+        errorText = errorJson.message || errorResponse;
+      } catch {
+        errorText = await response.text().catch(() => response.statusText);
+      }
+      
+      console.error('[VideoProgressAPI] Error response:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorText
+      });
+      
+      if (response.status === 401) {
+        // Clear auth data on 401
+        const { clearAuthData } = await import("./auth");
+        clearAuthData();
+        throw new Error(`401 Unauthorized - ${errorText || "Session expired. Please log in again."}`);
+      }
+      
+      throw new Error(`Failed to mark video as completed: ${response.status} ${response.statusText} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    console.log('[VideoProgressAPI] Success:', data);
+    return data;
   } catch (error) {
-    console.error("Error marking video as completed:", error);
+    console.error("[VideoProgressAPI] Error marking video as completed:", error);
     throw error;
   }
 }
@@ -60,19 +89,40 @@ export async function markVideoCompleted(courseId: string, videoId: string) {
  */
 export async function getCourseProgress(courseId: string) {
   try {
-    const response = await fetch(`${API_BASE}/course/${courseId}`, {
+    // Check authentication first
+    if (!isAuthenticated()) {
+      console.warn('[VideoProgressAPI] Not authenticated, returning default progress');
+      return { success: true, data: { completed: 0, total: 0, percentage: 0 } };
+    }
+
+    const url = `${API_BASE}/course/${courseId}`;
+    const headers = getHeaders();
+    
+    console.log('[VideoProgressAPI] Getting course progress:', { courseId, url, hasToken: !!headers.Authorization });
+
+    const response = await fetch(url, {
       method: "GET",
-      headers: getHeaders(),
+      headers,
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch course progress: ${response.statusText}`);
+      if (response.status === 401) {
+        const { clearAuthData } = await import("./auth");
+        clearAuthData();
+        return { success: true, data: { completed: 0, total: 0, percentage: 0 } };
+      }
+      const errorText = await response.text();
+      console.error('[VideoProgressAPI] Error response:', errorText);
+      throw new Error(`Failed to fetch course progress: ${response.status} ${response.statusText} - ${errorText}`);
     }
 
-    return await response.json();
+    const data = await response.json();
+    console.log('[VideoProgressAPI] Course progress:', data);
+    return data;
   } catch (error) {
     console.error("Error fetching course progress:", error);
-    throw error;
+    // Return default instead of throwing
+    return { success: true, data: { completed: 0, total: 0, percentage: 0 } };
   }
 }
 
@@ -84,19 +134,43 @@ export async function getCourseProgress(courseId: string) {
  */
 export async function getVideoStatus(courseId: string, videoId: string) {
   try {
-    const response = await fetch(`${API_BASE}/video/${courseId}/${videoId}`, {
+    // Check authentication first
+    if (!isAuthenticated()) {
+      return { success: true, data: { completed: false } };
+    }
+
+    const url = `${API_BASE}/video/${courseId}/${videoId}`;
+    const headers = getHeaders();
+    
+    console.log('[VideoProgressAPI] Getting video status:', { courseId, videoId, url, hasToken: !!headers.Authorization });
+
+    const response = await fetch(url, {
       method: "GET",
-      headers: getHeaders(),
+      headers,
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch video status: ${response.statusText}`);
+      // 404 is OK - video not initialized yet
+      if (response.status === 404) {
+        return { success: true, data: { completed: false } };
+      }
+      if (response.status === 401) {
+        const { clearAuthData } = await import("./auth");
+        clearAuthData();
+        return { success: true, data: { completed: false } };
+      }
+      const errorText = await response.text();
+      console.error('[VideoProgressAPI] Error response:', errorText);
+      // Return default instead of throwing
+      return { success: true, data: { completed: false } };
     }
 
-    return await response.json();
+    const data = await response.json();
+    return data;
   } catch (error) {
     console.error("Error fetching video status:", error);
-    throw error;
+    // Return default status instead of throwing
+    return { success: true, data: { completed: false } };
   }
 }
 
