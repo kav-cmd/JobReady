@@ -1,5 +1,5 @@
 import User from '../models/user.model.js';
-import { sendOtpSchema, verifyOtpSchema, loginSchema } from '../validation/auth.validation.js';
+import { sendOtpSchema, verifyOtpSchema, loginSchema, registerSchema } from '../validation/auth.validation.js';
 import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 import mockDb from '../config/mockDb.js';
@@ -111,6 +111,10 @@ export const sendOtp = async (req, res) => {
     const otp = generateOTP();
     const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // OTP valid for 10 minutes
 
+    // Log OTP for local development (always log, not just in development mode)
+    console.log(`[Auth Controller] Generated OTP for ${email}: ${otp}`);
+    console.log(`[Auth Controller] NODE_ENV: ${process.env.NODE_ENV || 'not set'}`);
+
     // Send OTP to email
     await sendOTPToEmail(email, otp);
 
@@ -148,12 +152,16 @@ export const sendOtp = async (req, res) => {
       }
     }
 
-    res.status(200).json({
+    const responseData = {
       success: true,
       message: 'OTP sent successfully to your email',
-      // For development/testing only - remove in production
-      ...(process.env.NODE_ENV === 'development' && { otp })
-    });
+      // For development/testing only - include OTP if not in production
+      ...(process.env.NODE_ENV !== 'production' && { otp })
+    };
+    
+    console.log(`[Auth Controller] Sending response with OTP included: ${!!responseData.otp}`);
+    
+    res.status(200).json(responseData);
   } catch (error) {
     console.error('Send OTP error:', error);
     res.status(500).json({
@@ -193,16 +201,44 @@ export const verifyOtp = async (req, res) => {
       });
     }
 
+    // Check if OTP exists
+    if (!user.otp) {
+      console.log('[Auth Controller] No OTP found for user:', user.email);
+      return res.status(400).json({
+        success: false,
+        message: 'No OTP found. Please request a new one.'
+      });
+    }
+
     // Check if OTP has expired
-    if (!user.otpExpires || new Date() > user.otpExpires) {
+    const otpExpiresDate = user.otpExpires instanceof Date 
+      ? user.otpExpires 
+      : new Date(user.otpExpires);
+    
+    if (!user.otpExpires || new Date() > otpExpiresDate) {
+      console.log('[Auth Controller] OTP expired:', {
+        otpExpires: user.otpExpires,
+        now: new Date(),
+        expired: new Date() > otpExpiresDate
+      });
       return res.status(400).json({
         success: false,
         message: 'OTP has expired. Please request a new one.'
       });
     }
 
-    // Check if OTP matches
-    if (user.otp !== otp) {
+    // Check if OTP matches (convert both to string for comparison)
+    const userOtp = String(user.otp || '').trim();
+    const providedOtp = String(otp || '').trim();
+    
+    console.log('[Auth Controller] OTP comparison:', {
+      userOtp,
+      providedOtp,
+      match: userOtp === providedOtp,
+      userEmail: user.email
+    });
+    
+    if (userOtp !== providedOtp) {
       return res.status(400).json({
         success: false,
         message: 'Invalid OTP. Please try again.'
@@ -309,14 +345,119 @@ export const resendOtp = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'OTP resent successfully',
-      // For development/testing only - remove in production
-      ...(process.env.NODE_ENV === 'development' && { otp })
+      // For development/testing only - include OTP if not in production
+      ...(process.env.NODE_ENV !== 'production' && { otp })
     });
   } catch (error) {
     console.error('Resend OTP error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to resend OTP'
+    });
+  }
+};
+
+// Register Controller - Direct registration without OTP
+export const register = async (req, res) => {
+  try {
+    // Validate request body
+    const { error, value } = registerSchema.validate(req.body);
+
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: error.details[0].message
+      });
+    }
+
+    const { name, email, phone, password, role } = value;
+
+    // Check if user with email already exists
+    let existingUser;
+    if (isDbConnected()) {
+      existingUser = await User.findOne({ email });
+    } else {
+      existingUser = await mockDb.findUserByEmail(email);
+    }
+
+    if (existingUser) {
+      return res.status(409).json({
+        success: false,
+        message: 'Account already exists'
+      });
+    }
+
+    // Check if phone is already registered
+    let existingPhone;
+    if (isDbConnected()) {
+      existingPhone = await User.findOne({ phone });
+    } else {
+      existingPhone = await mockDb.findUserByPhone(phone);
+    }
+
+    if (existingPhone) {
+      return res.status(409).json({
+        success: false,
+        message: 'Phone number already registered'
+      });
+    }
+
+    // Create user record - automatically verified
+    const userData = {
+      name,
+      email,
+      phone,
+      password,
+      role: role || 'student',
+      isVerified: true
+    };
+
+    let user;
+    if (isDbConnected()) {
+      user = new User(userData);
+      await user.save();
+    } else {
+      user = await mockDb.saveUser(userData);
+    }
+
+    // Get user ID (handle both MongoDB ObjectId and string IDs)
+    const userId = user._id ? user._id.toString() : (user.id || user._id);
+    
+    // Generate JWT token
+    const token = jwt.sign(
+      {
+        id: userId,
+        role: user.role || 'student'
+      },
+      process.env.JWT_SECRET || 'your-secret-key',
+      {
+        expiresIn: process.env.JWT_EXPIRES_IN || '7d'
+      }
+    );
+
+    // Prepare response - ensure all IDs are strings
+    const userResponse = {
+      id: userId,
+      _id: userId, // Include both for compatibility
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      role: user.role || 'student'
+    };
+
+    console.log('[Auth Controller] User registered and verified automatically:', user.email);
+
+    res.status(201).json({
+      success: true,
+      message: 'Account created successfully',
+      token,
+      user: userResponse
+    });
+  } catch (error) {
+    console.error('Register error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create account'
     });
   }
 };

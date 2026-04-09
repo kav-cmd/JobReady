@@ -26,20 +26,36 @@ export async function generateResumePDF(
   try {
     const element = document.getElementById(elementId);
     if (!element) {
-      throw new Error("Resume element not found");
+      throw new Error(`Resume element with ID "${elementId}" not found`);
     }
 
-    // Create canvas from HTML
+    // Scroll element into view to ensure it's rendered
+    element.scrollIntoView({ behavior: "instant", block: "start" });
+    
+    // Wait a bit for any animations or rendering to complete
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Create canvas from HTML with better options
     const canvas = await html2canvas(element, {
-      scale: window.devicePixelRatio || 2,
+      scale: 2,
       useCORS: true,
       logging: false,
       backgroundColor: "#ffffff",
+      width: element.scrollWidth,
+      height: element.scrollHeight,
+      windowWidth: element.scrollWidth,
+      windowHeight: element.scrollHeight,
+      allowTaint: false,
+      removeContainer: false,
     } as any);
+
+    if (!canvas) {
+      throw new Error("Failed to create canvas from resume element");
+    }
 
     // Calculate PDF dimensions
     const imgWidth = 210; // A4 width in mm
-    const pageHeight = 295; // A4 height in mm
+    const pageHeight = 297; // A4 height in mm (corrected)
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
     let heightLeft = imgHeight;
 
@@ -47,21 +63,26 @@ export async function generateResumePDF(
     let position = 0;
 
     // Add pages
-    const imgData = canvas.toDataURL("image/png");
+    const imgData = canvas.toDataURL("image/png", 1.0);
+    let pageCount = 0;
     while (heightLeft >= 0) {
       pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
       position -= pageHeight;
+      pageCount++;
       if (heightLeft > 0) {
         pdf.addPage();
       }
     }
 
+    console.log(`PDF generated successfully with ${pageCount} page(s)`);
+
     // Convert to blob
     return pdf.output("blob");
   } catch (error) {
     console.error("Error generating PDF:", error);
-    throw new Error("Failed to generate resume PDF");
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    throw new Error(`Failed to generate resume PDF: ${errorMessage}`);
   }
 }
 

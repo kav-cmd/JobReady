@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Briefcase, Mail, Lock, Phone, User, ArrowLeft, CheckCircle, Loader2 } from "lucide-react";
@@ -10,23 +9,20 @@ import { useTranslation } from "react-i18next";
 
 export default function Signup() {
   const { t } = useTranslation();
-  const [step, setStep] = useState<"details" | "verify">("details");
   const [loading, setLoading] = useState(false);
-  const [resendLoading, setResendLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
     password: "",
     role: "student",
-    otp: "",
   });
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5001/api";
 
-  const handleSendOtp = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.name || !formData.email || !formData.phone || !formData.password) {
@@ -40,7 +36,7 @@ export default function Signup() {
 
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/send-otp`, {
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -54,65 +50,22 @@ export default function Signup() {
         }),
       });
 
-      const data = await response.json();
-
+      // Check if response is ok before parsing JSON
       if (!response.ok) {
-        throw new Error(data.message || t("signup.retryOtp"));
+        let errorMessage = "Failed to create account";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          errorMessage = `Failed to create account (${response.status})`;
+        }
+        throw new Error(errorMessage);
       }
-
-      setStep("verify");
-      toast({
-        title: t("signup.otpSent"),
-        description: t("signup.otpSentTo", { email: formData.email }),
-      });
-
-      // For development - show OTP if available
-      if (data.otp) {
-        toast({
-          title: "Development Mode",
-          description: `OTP: ${data.otp}`,
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : t("signup.retryOtp"),
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!formData.otp || formData.otp.length !== 6) {
-      toast({
-        title: "Error",
-        description: t("signup.validOtp"),
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const response = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          otp: formData.otp,
-        }),
-      });
 
       const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.message || t("signup.verifyFailed"));
+      if (!data.success || !data.token || !data.user) {
+        throw new Error("Invalid response from server");
       }
 
       // Save token using centralized auth utility
@@ -121,7 +74,7 @@ export default function Signup() {
 
       toast({
         title: t("signup.success"),
-        description: t("signup.emailVerified"),
+        description: "Account created successfully!",
       });
 
       setTimeout(() => {
@@ -130,55 +83,11 @@ export default function Signup() {
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : t("signup.verifyFailed"),
+        description: error instanceof Error ? error.message : "Failed to create account",
         variant: "destructive",
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleResendOtp = async () => {
-    setResendLoading(true);
-    try {
-      const response = await fetch(`${API_BASE_URL}/auth/resend-otp`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: formData.email,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || t("signup.resendFailed"));
-      }
-
-      toast({
-        title: t("signup.otpSent"),
-        description: t("signup.otpSentTo", { email: formData.email }),
-      });
-
-      // For development - show OTP if available
-      if (data.otp) {
-        toast({
-          title: "Development Mode",
-          description: `OTP: ${data.otp}`,
-        });
-      }
-
-      setFormData({ ...formData, otp: "" });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : t("signup.resendFailed"),
-        variant: "destructive",
-      });
-    } finally {
-      setResendLoading(false);
     }
   };
 
@@ -208,12 +117,10 @@ export default function Signup() {
             </Link>
 
             <h1 className="text-2xl font-bold text-foreground">
-              {step === "details" ? t("signup.createAccount") : t("signup.verifyEmail")}
+              {t("signup.createAccount")}
             </h1>
             <p className="mt-2 text-muted-foreground">
-              {step === "details"
-                ? t("signup.startJourney")
-                : t("signup.enterOtp")}
+              {t("signup.startJourney")}
             </p>
           </motion.div>
 
@@ -223,157 +130,88 @@ export default function Signup() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="mt-8"
           >
-            {/* Progress Indicator */}
-            <div className="flex items-center gap-3 mb-8">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center text-sm font-medium text-primary-foreground">
-                  {step === "verify" ? <CheckCircle className="w-4 h-4" /> : "1"}
-                </div>
-                <span className="text-sm font-medium text-foreground">{t("signup.details")}</span>
-              </div>
-              <div className="flex-1 h-0.5 bg-border" />
-              <div className="flex items-center gap-2">
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${step === "verify"
-                    ? "gradient-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
-                    }`}
-                >
-                  2
-                </div>
-                <span className={`text-sm font-medium ${step === "verify" ? "text-foreground" : "text-muted-foreground"}`}>
-                  {t("signup.verify")}
-                </span>
-              </div>
-            </div>
-
-            <form onSubmit={step === "details" ? handleSendOtp : handleVerifyOtp} className="space-y-5">
-              {step === "details" ? (
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="name">{t("signup.fullName")}</Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        id="name"
-                        type="text"
-                        placeholder="Rahul Sharma"
-                        value={formData.name}
-                        onChange={(e) =>
-                          setFormData({ ...formData, name: e.target.value })
-                        }
-                        className="pl-10"
-                        required
-                        disabled={loading}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="email">{t("signup.emailAddress")}</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="you@example.com"
-                        value={formData.email}
-                        onChange={(e) =>
-                          setFormData({ ...formData, email: e.target.value })
-                        }
-                        className="pl-10"
-                        required
-                        disabled={loading}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">{t("signup.phoneNumber")}</Label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        id="phone"
-                        type="tel"
-                        placeholder="+91 98765 43210"
-                        value={formData.phone}
-                        onChange={(e) =>
-                          setFormData({ ...formData, phone: e.target.value })
-                        }
-                        className="pl-10"
-                        required
-                        disabled={loading}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="password">{t("signup.createPassword")}</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        id="password"
-                        type="password"
-                        placeholder={t("signup.passwordMinChars")}
-                        value={formData.password}
-                        onChange={(e) =>
-                          setFormData({ ...formData, password: e.target.value })
-                        }
-                        className="pl-10"
-                        required
-                        minLength={6}
-                        disabled={loading}
-                      />
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <div className="space-y-2">
-                  <Label htmlFor="otp">{t("signup.verificationCode")}</Label>
+            <form onSubmit={handleRegister} className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="name">{t("signup.fullName")}</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
-                    id="otp"
+                    id="name"
                     type="text"
-                    placeholder={t("signup.enter6Digit")}
-                    value={formData.otp}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, '').slice(0, 6);
-                      setFormData({ ...formData, otp: value });
-                    }}
-                    className="text-center text-2xl tracking-widest"
-                    maxLength={6}
+                    placeholder="Rahul Sharma"
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
+                    className="pl-10"
                     required
                     disabled={loading}
                   />
-                  <p className="text-sm text-muted-foreground text-center mt-2">
-                    {t("signup.didntReceive")}{" "}
-                    <button
-                      type="button"
-                      onClick={handleResendOtp}
-                      disabled={resendLoading}
-                      className="text-primary hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {resendLoading ? t("signup.resending") : t("signup.resend")}
-                    </button>
-                  </p>
                 </div>
-              )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">{t("signup.emailAddress")}</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={formData.email}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
+                    className="pl-10"
+                    required
+                    disabled={loading}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phone">{t("signup.phoneNumber")}</Label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="+91 98765 43210"
+                    value={formData.phone}
+                    onChange={(e) =>
+                      setFormData({ ...formData, phone: e.target.value })
+                    }
+                    className="pl-10"
+                    required
+                    disabled={loading}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password">{t("signup.createPassword")}</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder={t("signup.passwordMinChars")}
+                    value={formData.password}
+                    onChange={(e) =>
+                      setFormData({ ...formData, password: e.target.value })
+                    }
+                    className="pl-10"
+                    required
+                    minLength={6}
+                    disabled={loading}
+                  />
+                </div>
+              </div>
 
               <button type="submit" className="w-full h-11 px-8 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center justify-center font-medium disabled:opacity-50 disabled:cursor-not-allowed" disabled={loading}>
                 {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                {step === "details" ? t("signup.continue") : t("signup.verifyAndCreate")}
+                {t("signup.createAccount")}
               </button>
-
-              {step === "verify" && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="w-full"
-                  onClick={() => setStep("details")}
-                  disabled={loading}
-                >
-                  {t("signup.goBack")}
-                </Button>
-              )}
             </form>
 
             <p className="mt-6 text-center text-sm text-muted-foreground">

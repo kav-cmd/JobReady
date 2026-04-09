@@ -18,6 +18,7 @@ import { SuggestedSkillsSection } from "@/components/SuggestedSkillsSection";
 import {
   generateResumePDF,
   saveResumeMetadata,
+  downloadBlob,
   type SavedResume,
 } from "@/lib/resumePdfUtils";
 import {
@@ -147,7 +148,7 @@ export default function Resume() {
       // Generate PDF from resume preview
       const pdfBlob = await generateResumePDF("resume-preview", `${resumeData.name}_Resume`);
 
-      // Create resume metadata
+      // Create resume metadata (without blob, as blobs can't be stored in localStorage)
       const savedResume: SavedResume = {
         id: `resume_${Date.now()}`,
         name: `${resumeData.name}'s Resume`,
@@ -155,25 +156,28 @@ export default function Resume() {
         timestamp: Date.now(),
         dateCreated: new Date().toLocaleDateString(),
         fileSize: pdfBlob.size,
-        pdfBlob: pdfBlob,
       };
 
       // Save to localStorage
       saveResumeMetadata(savedResume);
 
+      // Actually download the PDF file
+      const filename = `${resumeData.name.replace(/\s+/g, '_')}_Resume.pdf`;
+      downloadBlob(pdfBlob, filename);
+
       setIsGeneratingPDF(false);
       setShowDownloadConfirm(false);
 
       toast({
-        title: "Resume Saved Successfully! 🎉",
-        description: "Your resume has been saved to 'My Resumes' section.",
+        title: "Resume Downloaded Successfully! 🎉",
+        description: "Your resume has been downloaded and saved to 'My Resumes' section.",
       });
     } catch (error) {
       console.error("Error generating PDF:", error);
       setIsGeneratingPDF(false);
       toast({
         title: "Error",
-        description: "Failed to generate resume PDF. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to generate resume PDF. Please try again.",
         variant: "destructive",
       });
     }

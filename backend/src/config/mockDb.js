@@ -24,7 +24,17 @@ class MockDatabase {
         const existingIndex = this.users.findIndex(u => u.email === userData.email);
 
         if (existingIndex >= 0) {
-            this.users[existingIndex] = { ...this.users[existingIndex], ...userData };
+            // Preserve existing fields and update with new data
+            const existingUser = this.users[existingIndex];
+            this.users[existingIndex] = { 
+                ...existingUser, 
+                ...userData,
+                updatedAt: new Date(),
+                // Preserve _id and id
+                _id: existingUser._id || userData._id,
+                id: existingUser.id || userData.id || existingUser._id || userData._id
+            };
+            
             // Ensure comparePassword method exists
             if (!this.users[existingIndex].comparePassword) {
                 this.users[existingIndex].comparePassword = async function (candidatePassword) {
@@ -37,11 +47,17 @@ class MockDatabase {
                     return candidatePassword === this.password;
                 };
             }
+            
+            // Log OTP for debugging (always log if OTP exists, helpful for local development)
+            if (userData.otp) {
+                console.log('[MockDB] OTP saved for user:', userData.email, 'OTP:', userData.otp);
+            }
+            
             return this.users[existingIndex];
         } else {
             const newUser = {
-                _id: `mock_id_${Math.random().toString(36).substr(2, 9)}`,
-                id: `mock_id_${Math.random().toString(36).substr(2, 9)}`, // Include both _id and id
+                _id: userData._id || `mock_id_${Math.random().toString(36).substr(2, 9)}`,
+                id: userData.id || userData._id || `mock_id_${Math.random().toString(36).substr(2, 9)}`,
                 ...userData,
                 createdAt: new Date(),
                 updatedAt: new Date(),
@@ -56,6 +72,12 @@ class MockDatabase {
                 }
             };
             this.users.push(newUser);
+            
+            // Log OTP for debugging (always log if OTP exists, helpful for local development)
+            if (userData.otp) {
+                console.log('[MockDB] New user created with OTP:', userData.email, 'OTP:', userData.otp);
+            }
+            
             return newUser;
         }
     }

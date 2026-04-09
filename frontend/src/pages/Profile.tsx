@@ -3,11 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { motion } from "framer-motion";
-import { User, Mail, Phone, Shield, Loader2, Save, LogOut } from "lucide-react";
+import { User, Mail, Phone, Shield, Loader2, Save } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { getCurrentUser, getAuthHeaders, isAuthenticated, clearAuthData } from "@/lib/auth";
+import { getCurrentUser, getAuthHeaders, isAuthenticated } from "@/lib/auth";
 
 interface UserProfile {
   id: string;
@@ -293,33 +293,6 @@ export default function Profile() {
                 Save Changes
               </>
             )}
-          </Button>
-        </motion.div>
-
-        {/* Logout Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-card border border-border rounded-lg p-6 mt-6"
-        >
-          <h2 className="text-lg font-semibold text-foreground mb-4">Account Actions</h2>
-          <Button
-            onClick={() => {
-              clearAuthData();
-              toast({
-                title: "Logged Out",
-                description: "You have been logged out successfully",
-              });
-              setTimeout(() => {
-                navigate("/");
-              }, 500);
-            }}
-            variant="destructive"
-            className="w-full gap-2"
-          >
-            <LogOut className="w-4 h-4" />
-            Log Out
           </Button>
         </motion.div>
       </div>

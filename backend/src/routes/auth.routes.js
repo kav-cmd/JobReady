@@ -1,24 +1,30 @@
 import express from 'express';
-import { sendOtp, verifyOtp, resendOtp, login, getProfile, updateProfile } from '../controllers/auth.controller.js';
+import { register, sendOtp, verifyOtp, resendOtp, login, getProfile, updateProfile } from '../controllers/auth.controller.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
 
 /**
+ * POST /api/auth/register
+ * Register user directly (no OTP verification)
+ */
+router.post('/register', register);
+
+/**
  * POST /api/auth/send-otp
- * Send OTP to user's phone for registration
+ * Send OTP to user's phone for registration (legacy - kept for backward compatibility)
  */
 router.post('/send-otp', sendOtp);
 
 /**
  * POST /api/auth/verify-otp
- * Verify OTP and create account
+ * Verify OTP and create account (legacy - kept for backward compatibility)
  */
 router.post('/verify-otp', verifyOtp);
 
 /**
  * POST /api/auth/resend-otp
- * Resend OTP to user's phone
+ * Resend OTP to user's phone (legacy - kept for backward compatibility)
  */
 router.post('/resend-otp', resendOtp);
 
