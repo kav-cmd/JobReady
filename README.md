@@ -166,6 +166,12 @@ Base URL: `http://localhost:5001/api`
 `mode` can be `quiz`, `notes`, or `doubt`. `language` supports `en`, `hi`, `kn`, `hinglish`.
 
 ---
+## Contributors 
+1-Vaanya Singh 
+2-Manya Sharma
+3-Aryaki 
+4-Kavya 
+5-Anish
 
 ## License
 
